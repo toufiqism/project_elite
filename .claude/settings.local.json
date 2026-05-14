@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(skill-creator)",
+      "Read(//mnt/k/**)",
+      "Bash(flutter analyze *)",
+      "PowerShell(flutter analyze *)"
+    ]
+  }
+}
