@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'core/storage/hive_setup.dart';
 import 'core/theme/app_theme.dart';
 import 'features/fitness/state/fitness_controller.dart';
+import 'features/gamification/state/gamification_controller.dart';
 import 'features/habits/state/habit_controller.dart';
 import 'features/notifications/service/notification_service.dart';
 import 'features/notifications/state/notification_controller.dart';
@@ -56,6 +57,20 @@ class ProjectEliteApp extends StatelessWidget {
             // Reschedule whenever prayer times become available or change.
             // Fire-and-forget; controller guards against concurrent inits.
             ctrl.reschedule(prayerTimes: prayer.times);
+            return ctrl;
+          },
+        ),
+        ChangeNotifierProxyProvider4<StudyController, HabitController,
+            PrayerController, FitnessController, GamificationController>(
+          create: (_) => GamificationController(),
+          update: (_, study, habits, prayer, fitness, gam) {
+            final ctrl = gam ?? GamificationController();
+            ctrl.recompute(
+              study: study,
+              habits: habits,
+              prayer: prayer,
+              fitness: fitness,
+            );
             return ctrl;
           },
         ),

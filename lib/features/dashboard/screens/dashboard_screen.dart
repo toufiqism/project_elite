@@ -5,6 +5,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../shared/widgets/elite_card.dart';
 import '../../fitness/state/fitness_controller.dart';
+import '../../gamification/screens/achievements_screen.dart';
+import '../../gamification/state/gamification_controller.dart';
+import '../../gamification/widgets/celebration_overlay.dart';
 import '../../habits/state/habit_controller.dart';
 import '../../prayer/state/prayer_controller.dart';
 import '../../profile/models/user_profile.dart';
@@ -12,9 +15,27 @@ import '../../profile/screens/profile_screen.dart';
 import '../../profile/state/profile_controller.dart';
 import '../../study/state/study_controller.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   final ValueChanged<int>? onJumpTab;
   const DashboardScreen({super.key, this.onJumpTab});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  bool _celebrationChecked = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_celebrationChecked) return;
+    _celebrationChecked = true;
+    // Wait one frame so the dependent providers have settled.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) CelebrationOverlay.showIfPending(context);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +44,7 @@ class DashboardScreen extends StatelessWidget {
     final habits = context.watch<HabitController>();
     final prayer = context.watch<PrayerController>();
     final fitness = context.watch<FitnessController>();
+    final gam = context.watch<GamificationController>();
 
     final goalHours = p?.studyGoalHoursPerDay ?? 5;
     final studySeconds = study.totalToday().inSeconds;
@@ -100,6 +122,8 @@ class DashboardScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          _xpHeroCard(context, gam),
+          const SizedBox(height: 14),
           _dailyScoreCard(dailyScore, studyPct, habitPct, prayerPct, fitnessPct),
           const SizedBox(height: 20),
           const SectionHeader(title: 'Today'),
@@ -152,7 +176,7 @@ class DashboardScreen extends StatelessWidget {
           if (nextSlot != null && nextTime != null) ...[
             const SectionHeader(title: 'Next prayer'),
             EliteCard(
-              onTap: () => onJumpTab?.call(3),
+              onTap: () => widget.onJumpTab?.call(3),
               child: Row(
                 children: [
                   const Icon(Icons.access_time, color: AppColors.accent),
@@ -177,6 +201,103 @@ class DashboardScreen extends StatelessWidget {
           ],
           const SectionHeader(title: 'Today\'s plan'),
           _planList(context, p, study, habits, prayer, fitness),
+        ],
+      ),
+    );
+  }
+
+  Widget _xpHeroCard(BuildContext context, GamificationController gam) {
+    final unlockedCount = gam.unlocked.length;
+    return EliteCard(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const AchievementsScreen()),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.accent, width: 2),
+                ),
+                alignment: Alignment.center,
+                child: Text('${gam.level.level}',
+                    style: const TextStyle(
+                      color: AppColors.accent,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    )),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      gam.title.toUpperCase(),
+                      style: const TextStyle(
+                        color: AppColors.accent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 2.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text('${gam.totalXp} XP',
+                        style: const TextStyle(
+                          color: AppColors.text,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        )),
+                  ],
+                ),
+              ),
+              if (gam.newlyUnlocked.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${gam.newlyUnlocked.length} NEW',
+                    style: const TextStyle(
+                      color: AppColors.background,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                )
+              else
+                Text(
+                  '$unlockedCount badges',
+                  style: const TextStyle(
+                      color: AppColors.muted, fontSize: 12),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(5),
+            child: LinearProgressIndicator(
+              value: gam.level.progress,
+              minHeight: 8,
+              backgroundColor: AppColors.surfaceAlt,
+              color: AppColors.accent,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${gam.level.xpToNextLevel} XP to level ${gam.level.level + 1}',
+            style: const TextStyle(color: AppColors.muted, fontSize: 12),
+          ),
         ],
       ),
     );
@@ -287,13 +408,13 @@ class DashboardScreen extends StatelessWidget {
         icon: Icons.menu_book,
         text: 'Study ${goalHours.toStringAsFixed(1)} hours',
         done: study.totalToday().inMinutes >= goalHours * 60,
-        onTap: () => onJumpTab?.call(1),
+        onTap: () => widget.onJumpTab?.call(1),
       ),
       _PlanItem(
         icon: Icons.fitness_center,
         text: 'Workout ${workoutMin.toStringAsFixed(0)} minutes',
         done: fitness.totalWorkoutToday().inMinutes >= workoutMin,
-        onTap: () => onJumpTab?.call(4),
+        onTap: () => widget.onJumpTab?.call(4),
       ),
       _PlanItem(
         icon: Icons.water_drop,
@@ -304,7 +425,7 @@ class DashboardScreen extends StatelessWidget {
         icon: Icons.mosque,
         text: 'Pray 5 times',
         done: prayer.completedToday() == 5,
-        onTap: () => onJumpTab?.call(3),
+        onTap: () => widget.onJumpTab?.call(3),
       ),
       _PlanItem(
         icon: Icons.bedtime,

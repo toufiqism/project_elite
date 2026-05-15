@@ -6,6 +6,29 @@ Running log of changes made by Claude across sessions. Newest entries at top.
 
 ## 2026-05-15
 
+### Phase 3: Gamification
+
+Built XP/levels/titles/achievements per PDF section 10. User picked: all four XP sources (study minutes / habit completions / prayers / workouts) feeding one XP pool; quadratic level curve (N² × 100); Dashboard hero card + dedicated Achievements screen pushed from Profile; in-app celebration overlay on unlock or level-up (no notification).
+
+XP rules (1 XP/min study, 10 XP/habit completion, 8 XP/prayer, 1 XP/min workout + 30 XP/session). Title bands match PDF exactly: Beginner (lv 1+) → Disciplined (5+) → Elite (10+) → Mastermind (20+) → Ayanokoji (50+).
+
+Implementation:
+
+- `lib/features/gamification/models/level_info.dart` — `LevelInfo.fromXp(total)` computes level via the inverted quadratic curve, exposes progress fraction + XP-to-next; `Titles` ladder + `forLevel`/`nextBandAfter` helpers.
+- `lib/features/gamification/models/xp.dart` — `GamificationStats` snapshot pulled from the 4 source controllers (totals + streaks); `XpRules.totalFor(stats)` computes the XP scalar. Prayer streak is derived by walking the last 365 days for full 5-of-5 days.
+- `lib/features/gamification/models/achievement.dart` — `Achievement` records carrying `(current, target)` progress closures; catalog seeds the PDF's 3 required (7-day study streak, 30 workouts, 100 prayers) plus natural extensions: first session, 100 study hours, 30-day study streak, habit streaks (7/30), 500 habit days, prayer streaks (7/30), first workout, 7-day workout streak, 50 hours trained, XP milestones (10k/50k), level milestones (5/10/20). Milestones use synthetic targets — the controller intercepts them in `progressFor` to evaluate against live XP/level rather than stats.
+- `lib/features/gamification/state/gamification_controller.dart` — Hive-backed seen-set + last-seen-level. `recompute(...)` runs on every source-controller notify (via proxy provider). `hasPendingCelebration` = newly unlocked OR level-up since last seen. `markCelebrationSeen()` persists.
+- `lib/features/gamification/widgets/celebration_overlay.dart` — animated modal dialog (scale + fade tween) showing the level number, title (if level-up), and newly-unlocked badges. `showIfPending(context)` is the single entry point.
+- `lib/features/gamification/screens/achievements_screen.dart` — hero card with level/XP/progress + full title ladder showing locked/unlocked/NEXT bands + grouped badge list (unlocked count, in-progress with `(current/target)` and progress bar).
+
+Wiring:
+
+- `lib/main.dart` — added `ChangeNotifierProxyProvider4<Study, Habit, Prayer, Fitness, Gamification>`. `recompute` runs on every dependency notify.
+- `lib/features/dashboard/screens/dashboard_screen.dart` — converted to StatefulWidget so `didChangeDependencies` can schedule a post-frame call to `CelebrationOverlay.showIfPending(context)` exactly once per app session. New `_xpHeroCard` placed at the top of the dashboard scroll, tappable → Achievements screen. The card surfaces a "N NEW" accent pill when there are newly-unlocked badges since last viewed. Rewrote `onJumpTab` references to `widget.onJumpTab` after the stateful conversion.
+- `lib/features/profile/screens/profile_screen.dart` — added a 🏆 trophy icon in the AppBar that opens the Achievements screen.
+
+`flutter analyze`: 0 errors, 0 warnings, same 8 info-level lints as before (no new findings from Phase 3).
+
 ### Hardcoded the ExerciseDB API key (per explicit user request)
 
 User pasted their RapidAPI key in chat and explicitly chose "Hardcode in source for now, remove later" over the recommended Settings-dialog flow and over rotating the key. I flagged the chat exposure; user accepted the risk.
