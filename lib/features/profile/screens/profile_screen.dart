@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/elite_card.dart';
 import '../../ayanokoji/screens/ayanokoji_home_screen.dart';
 import '../../gamification/screens/achievements_screen.dart';
+import '../../reports/screens/reports_screen.dart';
 import '../../settings/screens/settings_screen.dart';
 import '../state/profile_controller.dart';
 
@@ -30,6 +31,13 @@ class ProfileScreen extends StatelessWidget {
             icon: const Icon(Icons.emoji_events_outlined),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const AchievementsScreen()),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Reports',
+            icon: const Icon(Icons.bar_chart),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ReportsScreen()),
             ),
           ),
           IconButton(

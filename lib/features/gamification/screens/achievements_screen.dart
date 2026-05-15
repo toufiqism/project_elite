@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/elite_card.dart';
+import '../../reports/screens/reports_screen.dart';
 import '../models/achievement.dart';
 import '../models/level_info.dart';
 import '../state/gamification_controller.dart';
@@ -21,7 +22,19 @@ class AchievementsScreen extends StatelessWidget {
         .toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Achievements')),
+      appBar: AppBar(
+        title: const Text('Achievements'),
+        actions: [
+          IconButton(
+            tooltip: 'Reports',
+            icon: const Icon(Icons.bar_chart),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ReportsScreen()),
+            ),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

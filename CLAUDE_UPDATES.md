@@ -6,6 +6,26 @@ Running log of changes made by Claude across sessions. Newest entries at top.
 
 ## 2026-05-15
 
+### Phase 4: Weekly + Monthly Reports
+
+Built PDF section 11. User picked: pushed from Achievements + Profile (no nav change), current-week + current-month scope only (no historical browse), share-as-text via system share sheet.
+
+Implementation:
+
+- `lib/features/reports/models/period_report.dart` — `PeriodReport` value class covering both weekly & monthly periods with derived consistency rates (study days at goal, workout days, prayer perfect days, habit success) and `HabitBreakdown` per-habit completion record.
+- `lib/features/reports/data/reports_service.dart` — stateless aggregator. `buildWeek(...)` / `buildMonth(...)` walk the source controllers in date range and produce a `PeriodReport`. **Productivity score** = average daily score across the period (same 35/25/20/20 weights as the Dashboard's `_dailyScoreCard`). **Self-improvement score** = period XP normalised against `days × 50` XP/day target. XP-in-period computed inline (same rules as `XpRules` but date-scoped). Monthly only: weight change from earliest weight entry in range to latest. Plain-text formatter (`formatShareText`) packages everything for the share sheet.
+- `lib/features/reports/screens/reports_screen.dart` — hero score card (productivity + self-improvement + XP); for each period: 4-bar consistency card (study/workout/prayer/habit), summary grid (totals + sub-counts), per-habit breakdown bars, and (monthly only) weight-change card with trend icon. Share buttons fire `Share.share(formatShareText(...), subject: r.label)`.
+- `pubspec.yaml` — `share_plus ^10.1.2`.
+
+Wiring:
+
+- `lib/features/gamification/screens/achievements_screen.dart` — added a Reports `Icons.bar_chart` action in the AppBar.
+- `lib/features/profile/screens/profile_screen.dart` — added a Reports `Icons.bar_chart` icon between Achievements and Settings.
+
+Bug caught by `flutter analyze` and fixed in-turn: I wrote `SharePlus.instance.share(ShareParams(text: text))` initially (that's the v13+ API). The pinned `share_plus ^10.1.2` exposes `Share.share(text, subject: ...)` as a static. Switched and analyze went clean.
+
+Final `flutter analyze`: 0 errors, 0 warnings — same 9 pre-existing info lints (no new findings).
+
 ### Extended Islamic features (PDF section 6 follow-up)
 
 User picked all four sub-features (Daily duas, Tasbih, Hijri date, Qibla) and asked them to live inside the Prayer tab rather than as a separate bottom-nav tab. Bundled JSON for dua content (no API).
