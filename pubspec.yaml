@@ -58,6 +58,10 @@ dependencies:
   # Open URLs (YouTube search for exercises)
   url_launcher: ^6.3.0
 
+  # News feature
+  webview_flutter: ^4.8.0
+  geocoding: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

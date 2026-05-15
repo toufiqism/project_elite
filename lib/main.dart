@@ -16,6 +16,7 @@ import 'features/gamification/state/gamification_controller.dart';
 import 'features/habits/state/habit_controller.dart';
 import 'features/islamic/data/dua_service.dart';
 import 'features/islamic/state/tasbih_controller.dart';
+import 'features/news/state/news_controller.dart';
 import 'features/notifications/service/notification_service.dart';
 import 'features/notifications/state/notification_controller.dart';
 import 'features/prayer/state/prayer_controller.dart';
@@ -55,6 +56,7 @@ class ProjectEliteApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthController()),
         ChangeNotifierProvider(create: (_) => ProfileController()),
+        ChangeNotifierProvider(create: (_) => NewsController()),
         ChangeNotifierProvider(create: (_) => StudyController()),
         ChangeNotifierProvider(create: (_) => HabitController()),
         ChangeNotifierProvider(create: (_) => FitnessController()),

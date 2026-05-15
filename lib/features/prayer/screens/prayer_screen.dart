@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:provider/provider.dart';
 
@@ -20,6 +22,8 @@ class PrayerScreen extends StatefulWidget {
 }
 
 class _PrayerScreenState extends State<PrayerScreen> {
+  bool _autoDetecting = false;
+
   @override
   void initState() {
     super.initState();
@@ -31,6 +35,25 @@ class _PrayerScreenState extends State<PrayerScreen> {
     final address = prayer.address;
     if (address != null && address.isNotEmpty && prayer.times == null) {
       prayer.fetchByAddress(address);
+    } else if (address == null || address.isEmpty) {
+      _tryAutoDetect();
+    }
+  }
+
+  Future<void> _tryAutoDetect() async {
+    if (_autoDetecting || !mounted) return;
+    setState(() => _autoDetecting = true);
+    try {
+      final city = await _detectCity();
+      if (city == null || !mounted) return;
+      final profileCtrl = context.read<ProfileController>();
+      final prayerCtrl = context.read<PrayerController>();
+      await profileCtrl.update((p) => p.copyWith(prayerAddress: city));
+      await prayerCtrl.fetchByAddress(city);
+    } catch (_) {
+      // silent — falls back to manual entry
+    } finally {
+      if (mounted) setState(() => _autoDetecting = false);
     }
   }
 
@@ -130,7 +153,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
           const SizedBox(height: 16),
 
           // ── Prayer times ─────────────────────────────────────────────────
-          if (prayer.loading)
+          if (prayer.loading || _autoDetecting)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 20),
               child: Center(child: CircularProgressIndicator()),
@@ -163,19 +186,31 @@ class _PrayerScreenState extends State<PrayerScreen> {
             EliteCard(
               child: Column(
                 children: [
-                  const Icon(Icons.location_city_outlined,
+                  const Icon(Icons.location_on_outlined,
                       color: AppColors.muted, size: 36),
                   const SizedBox(height: 12),
                   const Text(
-                    'Enter your city to load prayer times.',
+                    'Set your city to load prayer times.',
                     style: TextStyle(color: AppColors.muted),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-                  FilledButton.icon(
-                    icon: const Icon(Icons.edit_location_outlined),
-                    label: const Text('Set city'),
-                    onPressed: () => _showAddressSheet(context),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.my_location, size: 18),
+                      label: const Text('Use my location'),
+                      onPressed: _tryAutoDetect,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      icon: const Icon(Icons.edit_location_outlined),
+                      label: const Text('Enter city manually'),
+                      onPressed: () => _showAddressSheet(context),
+                    ),
                   ),
                 ],
               ),
@@ -483,6 +518,7 @@ class _AddressSheet extends StatefulWidget {
 class _AddressSheetState extends State<_AddressSheet> {
   late final TextEditingController _ctrl;
   bool _saving = false;
+  bool _locating = false;
 
   @override
   void initState() {
@@ -502,6 +538,18 @@ class _AddressSheetState extends State<_AddressSheet> {
     setState(() => _saving = true);
     await widget.onSave(v);
     if (mounted) Navigator.pop(context);
+  }
+
+  Future<void> _locateMe() async {
+    setState(() => _locating = true);
+    try {
+      final city = await _detectCity();
+      if (city != null && mounted) _ctrl.text = city;
+    } catch (_) {
+      // silent
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
   }
 
   @override
@@ -545,7 +593,22 @@ class _AddressSheetState extends State<_AddressSheet> {
                   Icon(Icons.search, color: AppColors.muted, size: 20),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: _locating
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.my_location, size: 18),
+              label: Text(_locating ? 'Detecting...' : 'Use my location'),
+              onPressed: (_saving || _locating) ? null : _locateMe,
+            ),
+          ),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
@@ -569,4 +632,29 @@ class _AddressSheetState extends State<_AddressSheet> {
       ),
     );
   }
+}
+
+// ── Location helper (shared by screen + sheet) ────────────────────────────────
+
+Future<String?> _detectCity() async {
+  var permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+  }
+  if (permission == LocationPermission.denied ||
+      permission == LocationPermission.deniedForever) {
+    return null;
+  }
+  final pos = await Geolocator.getCurrentPosition(
+    locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
+  ).timeout(const Duration(seconds: 8));
+  final marks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+  if (marks.isEmpty) return null;
+  final p = marks.first;
+  final city = p.locality?.isNotEmpty == true
+      ? p.locality!
+      : p.administrativeArea ?? '';
+  final country = p.country ?? '';
+  if (city.isEmpty && country.isEmpty) return null;
+  return city.isNotEmpty ? '$city, $country' : country;
 }

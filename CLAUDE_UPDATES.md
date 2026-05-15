@@ -6,6 +6,54 @@ Running log of changes made by Claude across sessions. Newest entries at top.
 
 ## 2026-05-16
 
+### Feature: Prayer city auto-detected from device location
+
+Prayer times city is now set automatically from the device's GPS on the first Prayer tab visit (when no address is stored). Location permission is requested via `geolocator`; lat/lng is reverse-geocoded to `"City, Country"` via `geocoding` (e.g. "Dhaka, Bangladesh") and saved to `UserProfile.prayerAddress`, which triggers the AlAdhan fetch. Falls back silently to the manual-entry UI if permission is denied or location fails.
+
+**UX additions:**
+
+- **Auto-detect on first visit**: `_maybeAutoFetch` now calls `_tryAutoDetect()` when no address is stored; a spinner shows while detecting.
+- **Empty-state card**: "Use my location" `OutlinedButton` + "Enter city manually" `FilledButton` side-by-side.
+- **`_AddressSheet`**: "Use my location" `OutlinedButton` added between the TextField and "Load prayer times" button; shows an inline spinner and fills the TextField with the detected city so the user can confirm or edit before fetching.
+- **`_detectCity()`**: top-level private function shared by both the screen state and the sheet; permission check → `Geolocator.getCurrentPosition` → `placemarkFromCoordinates` → formats `"$locality, $country"`.
+
+**Files changed:**
+
+- `lib/features/prayer/screens/prayer_screen.dart` — added `geocoding`/`geolocator` imports; `_autoDetecting` state; `_tryAutoDetect()`, `_locateMe()`, `_detectCity()`; updated empty-state card; updated `_AddressSheet`.
+
+`flutter analyze`: 8 pre-existing info-level lints only — no errors or warnings.
+
+---
+
+### Feature: News tab (NewsAPI — local + international)
+
+Added a 6th bottom-navigation tab — **News** — with two sections: Local (country auto-detected from device GPS) and International (BBC, Reuters, CNN, Al Jazeera). Articles open in an in-app WebView with share and "open in browser" actions.
+
+**Architecture:**
+
+- `NewsController.init()` is called lazily on first tab visit: requests location permission via `geolocator`, reverse-geocodes lat/lng to ISO country code via `geocoding`, then fires both feed fetches in parallel (`Future.wait`). Location falls back to `"us"` on any error.
+- `NewsService.fetchLocal(countryCode)` calls `/v2/top-headlines?country=...`; `fetchInternational()` calls `/v2/top-headlines?sources=bbc-news,reuters,cnn,al-jazeera-english`. Both filter out removed/empty articles.
+- `ArticleWebViewScreen` wraps `webview_flutter`'s `WebViewController` with a `LinearProgressIndicator` loading bar; shares via `share_plus`; opens externally via `url_launcher`.
+- `android:usesCleartextTraffic="true"` added to `AndroidManifest.xml` so the WebView can load HTTP article URLs on Android API 28+.
+- NewsAPI key added to the gitignored `lib/core/config/api_keys.dart` (same FIXME pattern as ExerciseDB key — scrub before any distribution action).
+
+**Files changed:**
+
+- `lib/features/news/models/news_article.dart` (NEW)
+- `lib/features/news/data/news_service.dart` (NEW)
+- `lib/features/news/state/news_controller.dart` (NEW)
+- `lib/features/news/screens/news_screen.dart` (NEW)
+- `lib/features/news/screens/article_webview_screen.dart` (NEW)
+- `lib/core/config/api_keys.dart` — added `kNewsApiKey`
+- `pubspec.yaml` — added `webview_flutter: ^4.8.0`, `geocoding: ^3.0.0`
+- `lib/main.dart` — registered `NewsController` in `MultiProvider`
+- `lib/main_shell.dart` — added `NewsScreen` as 6th page + `BottomNavigationBarItem`
+- `android/app/src/main/AndroidManifest.xml` — `android:usesCleartextTraffic="true"`
+
+`flutter analyze`: 8 pre-existing info-level lints only — no errors or warnings introduced.
+
+---
+
 ### Feature: Prayer times via AlAdhan REST API + address-based lookup + manual slot editing
 
 Replaced the `adhan` package (local lat/lng computation) with the AlAdhan REST API (`https://api.aladhan.com/v1/timingsByAddress`) for prayer times. Users now set a city/address instead of sharing GPS coordinates. Each slot can also be manually overridden and the edit is persisted per-day in Hive.

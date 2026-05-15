@@ -10,3 +10,9 @@
 
 const String kExerciseDbApiKey =
     '2cbd31d01bmsh5d571e24c394a17p1ecf19jsn780bab2daae2';
+
+// FIXME: TEMPORARY — hardcoded NewsAPI key per user request on 2026-05-16.
+// REMOVE BEFORE: any git push, APK/IPA build distributed outside this device,
+// any screen share / pair session. Rotate at newsapi.org after removal.
+// This file is gitignored — it will never be committed accidentally.
+const String kNewsApiKey = 'd8ca5ad4052e41a7b71e5317841b1d39';
