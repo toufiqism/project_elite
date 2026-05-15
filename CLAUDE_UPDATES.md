@@ -6,6 +6,49 @@ Running log of changes made by Claude across sessions. Newest entries at top.
 
 ## 2026-05-16
 
+### Feature: User data isolation across accounts
+
+Different Firebase users now see fully isolated data. Previously, local Hive data persisted across logins regardless of which user signed in.
+
+**How it works:**
+
+`_Root` in `lib/main.dart` was converted from a `StatelessWidget` to a `StatefulWidget`. On every auth state change it compares the incoming Firebase UID against the `last_uid` stored in the `settings` Hive box:
+
+- **Same UID** (returning user, same session): data is left untouched, controllers are not reloaded — instant transition.
+- **Different UID** (new user or user switch): all 11 user-data boxes are cleared (`profile`, `study`, `habits`, `habitLogs`, `prayer`, `workoutSessions`, `weightLog`, `focusSessions`, `socialRatings`, `gameResults`, `tasbih`). `SyncService.cloudTimestamp()` is then called — if a cloud backup exists it is silently restored before controllers reload; if not, the app presents a fresh empty state (onboarding).
+- **Sign-out** (uid == null): spinner state and handled-UID are reset so the next sign-in is treated as a new session.
+
+While the async check/restore is in progress a centered `CircularProgressIndicator` is shown so the UI never flashes stale data.
+
+**Files changed:**
+
+- `lib/main.dart` — imports `hive` + `sync_service`; `_Root` → `StatefulWidget` with `_handledUid` + `_sessionReady` state, `_onAuthChanged()` listener, `_handleLogin(uid)` async method
+- `lib/features/habits/state/habit_controller.dart` — `reload()` now calls `_seedDefaults()` when the list is empty after reload (mirrors constructor behaviour; needed so a freshly-cleared habits box gets default habits seeded for new users)
+- `lib/features/islamic/state/tasbih_controller.dart` — added `reload()` which resets the in-memory `currentCount` from the (now-cleared) box
+
+`flutter analyze`: 9 pre-existing infos only — no errors.
+
+### Fix: Sign out not working
+
+Two bugs working together:
+
+1. **Silent exception blocking Firebase sign-out** — `GoogleSignIn().signOut()` throws when the current session used email/password (no active Google session). Because it was `await`-ed without a try-catch, the exception propagated and `_auth.signOut()` was never reached.
+
+2. **Navigator stack not cleared** — even after `_auth.signOut()` fires and `_Root` rebuilds to show `AuthScreen`, `SettingsScreen` was still sitting on top of the Navigator stack, so the user remained on the Settings screen and never saw the auth screen.
+
+- `lib/features/auth/state/auth_controller.dart` — wrapped `GoogleSignIn().signOut()` in a `try/catch` that silently ignores errors (best-effort Google session clear). `_auth.signOut()` now always executes regardless of provider.
+- `lib/features/settings/screens/settings_screen.dart` — added `Navigator.of(context).popUntil((route) => route.isFirst)` after `signOut()` completes. This pops SettingsScreen (and any other pushed routes) back to the root, where `_Root` now renders `AuthScreen`.
+
+`flutter analyze`: 2 pre-existing Radio deprecation infos only — no errors.
+
+### Fix: App hard-crashes on Google Sign-In (iOS)
+
+**Root cause:** `CFBundleURLTypes` with the `REVERSED_CLIENT_ID` URL scheme was missing from `ios/Runner/Info.plist`. Google Sign-In on iOS completes the OAuth flow by redirecting back to the app via a custom URL scheme. Without it registered, the OS has no handler for the redirect and the app crashes instantly when the Google picker returns.
+
+- `ios/Runner/Info.plist` — added `CFBundleURLTypes` array with `CFBundleURLSchemes` containing `com.googleusercontent.apps.345837181763-2jod7i44h2esabvuqrbcutj397ni0c5o` (sourced from `GoogleService-Info.plist` `REVERSED_CLIENT_ID`). Added at the top of the plist dict.
+
+No Dart code changed. Requires a full rebuild (`flutter run`) — hot reload/restart does not pick up `Info.plist` changes.
+
 ### Fix: Upload button spins indefinitely
 
 **Root cause:** `batch.commit()`, `_meta().get()`, and `Future.wait(boxSnaps)` in `SyncService` had no timeout. Firestore's `batch.commit()` waits for server acknowledgment — if the Firestore database hasn't been created in the Firebase console yet (or security rules block the write), the SDK retries silently forever rather than throwing, so the spinner never stopped and no error appeared.

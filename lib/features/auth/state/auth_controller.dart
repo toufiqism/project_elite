@@ -84,7 +84,11 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await GoogleSignIn().signOut();
+    // Google sign-out is best-effort — it may throw if this session used
+    // email/password (no active Google session). Never let it block Firebase.
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {}
     await _auth.signOut();
   }
 

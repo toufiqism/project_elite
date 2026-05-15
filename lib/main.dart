@@ -2,9 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 
 import 'core/storage/hive_setup.dart';
+import 'features/sync/service/sync_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/ayanokoji/state/ayanokoji_controller.dart';
 import 'features/auth/screens/auth_screen.dart';
@@ -119,17 +121,93 @@ class ProjectEliteApp extends StatelessWidget {
   }
 }
 
-class _Root extends StatelessWidget {
+class _Root extends StatefulWidget {
   const _Root();
 
   @override
+  State<_Root> createState() => _RootState();
+}
+
+class _RootState extends State<_Root> {
+  bool _sessionReady = false;
+  String? _handledUid;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<AuthController>().addListener(_onAuthChanged);
+    _onAuthChanged();
+  }
+
+  @override
+  void dispose() {
+    context.read<AuthController>().removeListener(_onAuthChanged);
+    super.dispose();
+  }
+
+  void _onAuthChanged() {
+    final uid = context.read<AuthController>().user?.uid;
+    if (uid == null) {
+      if (mounted) setState(() { _sessionReady = false; _handledUid = null; });
+      return;
+    }
+    if (uid == _handledUid) return;
+    _handleLogin(uid);
+  }
+
+  Future<void> _handleLogin(String uid) async {
+    if (!mounted) return;
+    setState(() => _sessionReady = false);
+
+    final settings = Hive.box(HiveBoxes.settings);
+    final lastUid = settings.get('last_uid') as String?;
+
+    if (lastUid != uid) {
+      const userBoxes = [
+        HiveBoxes.profile,
+        HiveBoxes.study,
+        HiveBoxes.habits,
+        HiveBoxes.habitLogs,
+        HiveBoxes.prayer,
+        HiveBoxes.workoutSessions,
+        HiveBoxes.weightLog,
+        HiveBoxes.focusSessions,
+        HiveBoxes.socialRatings,
+        HiveBoxes.gameResults,
+        HiveBoxes.tasbih,
+      ];
+      for (final name in userBoxes) {
+        await Hive.box(name).clear();
+      }
+
+      try {
+        final cloudTs = await SyncService.cloudTimestamp(uid);
+        if (cloudTs != null) {
+          await SyncService.restore(uid);
+        }
+      } catch (_) {}
+
+      await settings.put('last_uid', uid);
+    }
+
+    if (!mounted) return;
+    context.read<ProfileController>().reload();
+    context.read<StudyController>().reload();
+    context.read<HabitController>().reload();
+    context.read<FitnessController>().reload();
+    context.read<TasbihController>().reload();
+
+    if (mounted) setState(() { _sessionReady = true; _handledUid = uid; });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (!context.watch<AuthController>().isAuthenticated) {
-      return const AuthScreen();
+    final auth = context.watch<AuthController>();
+    if (!auth.isAuthenticated) return const AuthScreen();
+    if (!_sessionReady) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    if (!context.watch<ProfileController>().hasProfile) {
-      return const OnboardingScreen();
-    }
+    if (!context.watch<ProfileController>().hasProfile) return const OnboardingScreen();
     return const MainShell();
   }
 }

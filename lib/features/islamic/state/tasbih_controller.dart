@@ -90,6 +90,11 @@ class TasbihController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void reload() {
+    currentCount = countFor(_activePreset, DateTime.now());
+    notifyListeners();
+  }
+
   /// True once the user has reached the target for the active preset today.
   bool get atOrPastTarget => currentCount >= _activePreset.target;
 }

@@ -192,6 +192,10 @@ class SettingsScreen extends StatelessWidget {
     );
     if (confirm == true && context.mounted) {
       await context.read<AuthController>().signOut();
+      // Pop every pushed route so _Root (now showing AuthScreen) is visible.
+      if (context.mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
     }
   }
 

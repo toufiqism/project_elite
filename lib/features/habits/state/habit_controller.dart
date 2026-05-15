@@ -120,6 +120,10 @@ class HabitController extends ChangeNotifier {
 
   void reload() {
     _load();
-    notifyListeners();
+    if (_list.isEmpty) {
+      _seedDefaults();
+    } else {
+      notifyListeners();
+    }
   }
 }
