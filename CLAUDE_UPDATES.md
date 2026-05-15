@@ -6,6 +6,71 @@ Running log of changes made by Claude across sessions. Newest entries at top.
 
 ## 2026-05-15
 
+### Extended Islamic features (PDF section 6 follow-up)
+
+User picked all four sub-features (Daily duas, Tasbih, Hijri date, Qibla) and asked them to live inside the Prayer tab rather than as a separate bottom-nav tab. Bundled JSON for dua content (no API).
+
+Implementation:
+
+- `assets/duas.json` — curated 25-entry library (morning / evening / food / sleep / travel / protection / forgiveness / distress / knowledge / gratitude) with `{arabic, transliteration, meaning, reference}` per entry. Sourced from Hisnul Muslim canonical duas.
+- `pubspec.yaml` — `hijri ^3.0.0`, `flutter_compass ^0.8.1`, `assets:` block declaring `assets/duas.json`.
+- `lib/features/islamic/models/dua.dart` — Dua record + fromJson.
+- `lib/features/islamic/data/dua_service.dart` — singleton loader, loaded once at startup via `DuaService.instance.load()` in `main()`. `duaOfTheDay()` picks deterministically by `year×1000 + month×50 + day` so the same dua holds all day and rotates the next.
+- `lib/features/islamic/state/tasbih_controller.dart` — `TasbihPresets` (Subhan'Allah ×33, Alhamdulillah ×33, Allahu Akbar ×34 = 99); per-preset per-day counts persisted to `box_tasbih` keyed `preset|yyyy-MM-dd`; all-time and today-across-presets totals.
+- `lib/features/islamic/screens/tasbih_screen.dart` — preset row, large circular progress with tabular-figures count, light haptic on tap + heavy haptic on hitting target, reset button.
+- `lib/features/islamic/screens/duas_screen.dart` — horizontal category filter chips, scrollable list of `DuaCard`s with Arabic right-aligned, transliteration italic, meaning + reference.
+- `lib/features/islamic/screens/qibla_screen.dart` — `flutter_compass` stream + great-circle initial-bearing formula from current location to Kaaba (21.4225°N, 39.8262°E). Compass dial counter-rotates with device heading; qibla arrow rotates by the absolute bearing inside that frame. Turns green when within 5° of target. Calibration tip in footer.
+
+Wiring:
+
+- `lib/core/storage/hive_setup.dart` — new `box_tasbih`.
+- `lib/main.dart` — `DuaService.instance.load()` after Hive init; `TasbihController` registered in `MultiProvider`.
+- `lib/features/prayer/screens/prayer_screen.dart` — AppBar title now stacks "Prayer" + today's Hijri date (e.g. `26 Dhū al-Qaʿdah 1447 AH`); new AppBar action icons for Tasbih and Qibla (alongside Refresh location). New "Dua of the day" card at the bottom of the Prayer body with an "All duas" action linking to `DuasScreen`. Tap-anywhere on the dua card also navigates to the full library.
+
+`flutter analyze`: 0 errors, 0 warnings — same 9 pre-existing info lints (no new findings).
+
+Notes:
+
+- The Qibla compass relies on the device magnetometer. Some hardware (especially older iPads / phones with cases that interfere) won't have it; the screen surfaces a graceful "Compass not available" message in that case.
+- `flutter_compass` is unmaintained but still works on recent Flutter; if it breaks in the future, drop in `sensors_plus` magnetometer events instead.
+- Tasbih currently feeds its own Hive box only — it does **not** yet feed the Ayanokoji Discipline character stat (I mentioned that as a possibility in the question but skipped to keep this drop tight). Easy follow-up if you want it: add a `dailyTasbihCount` term to `AyanokojiController._recomputeStats`.
+
+### Phase 5: Ayanokoji Mode
+
+Built the PDF's section 8 "Ayanokoji Mode" in full (user explicitly opted into all 4 sub-systems and skipped Phase 4 Reports). The mode is a hub reached from the Dashboard mode-pill in the AppBar (top-right, shows AYANOKOJI when on, NORMAL otherwise) and from a shield icon in the Profile AppBar.
+
+Sub-systems:
+
+1. **Discipline Mode toggle** — single bool persisted in `box_settings`. When ON, the NotificationController's `_effectiveTone` is forced to `discipline` regardless of the user's Settings tone selection (their setting is restored when the toggle goes off). Mode shows as a glowing AYANOKOJI pill on the dashboard.
+2. **Six Character Stats** — Intelligence, Discipline, Strength, Focus, Consistency, Social Confidence. Each has its own XP pool with a sqrt-curve level (lvl ≈ √(xp/50), so lvl 10 = 5000 XP). Mappings: study min → INT (+ digit span + stroop bonuses); habit + prayer completions → DSC; workout minutes/sessions → STR; focus-mode minutes + reaction-time bonus → FOC; best-running-streak → CON; daily 1–5 self-rating → SOC. Radar chart on the Stats screen (custom painter).
+3. **Focus / Deep-Work timer** — 50-min default Pomodoro. `FocusTimerScreen` wraps `PopScope` to block back-nav; tapping back or End during a session opens a confirm dialog warning that partial minutes don't count. Completed-fully sessions award Focus XP, partial sessions log time but no XP (soft penalty per user choice).
+4. **3 Mini-games**: Digit Span (memory → INT), Reaction Time (focus → FOC, 5 rounds with too-early detection), Stroop (executive control → INT, 30-second time-attack). Hub at `MiniGamesScreen` with recent-plays list. Each result writes to `box_game_results` and recomputes stats.
+
+Implementation:
+
+- `lib/features/ayanokoji/models/character_stats.dart` — `CharacterStat` enum + `StatValue` with sqrt-curve level/progress derivation.
+- `lib/features/ayanokoji/models/focus_session.dart` — focus block log (started/duration/planned/completedFully).
+- `lib/features/ayanokoji/models/social_rating.dart` — single rating per day, keyed by `DateX.todayKey()` so re-saves overwrite.
+- `lib/features/ayanokoji/models/mini_game_result.dart` — kind/score/xpEarned per play.
+- `lib/features/ayanokoji/state/ayanokoji_controller.dart` — central controller. `recompute()` pulls study/habit/prayer/fitness totals on every source notify; merges with focus/social/games totals to produce 6 stat XP values. Exposes `setDisciplineMode`, `recordFocusSession`, `setSocialRatingToday`, `recordGameResult`.
+- `lib/features/ayanokoji/screens/ayanokoji_home_screen.dart` — hub. Discipline toggle card, mini stat list (tap → full stats screen), focus timer entry, mini-games entry.
+- `lib/features/ayanokoji/screens/character_stats_screen.dart` — hexagonal radar chart (CustomPainter normalizing each level against lvl 20), detailed stat rows with XP + source hint, daily Social-Confidence slider.
+- `lib/features/ayanokoji/screens/focus_timer_screen.dart` — fullscreen black, circular progress, focus-lock via `PopScope`, soft-penalty confirm dialog.
+- `lib/features/ayanokoji/screens/mini_games_screen.dart` — three game cards + recent-plays list.
+- `lib/features/ayanokoji/screens/games/digit_span_game.dart` — increasing-length sequence, type-to-recall.
+- `lib/features/ayanokoji/screens/games/reaction_time_game.dart` — wait-for-green tap test, 5 rounds, ms-based scoring.
+- `lib/features/ayanokoji/screens/games/stroop_game.dart` — colored word picker, 30-second time-attack.
+
+Wiring:
+
+- `lib/core/storage/hive_setup.dart` — three new boxes: `focusSessions`, `socialRatings`, `gameResults`.
+- `lib/main.dart` — registered `AyanokojiController` in `MultiProvider` (proxy over the 4 source controllers). NotificationController's proxy provider promoted to `ChangeNotifierProxyProvider2<PrayerController, AyanokojiController, ...>` so it can react to discipline-mode flips. Order: AyanokojiController declared before NotificationController so the latter can depend on it.
+- `lib/features/notifications/state/notification_controller.dart` — added `_disciplineOverride` field + `applyContext(prayerTimes:, disciplineMode:)` entry point with cheap dirty-checking (`PrayerTimes` equality across 5 slots + override-bit change). `reschedule()` now uses `_effectiveTone` which routes through the override.
+- `lib/features/dashboard/screens/dashboard_screen.dart` — added the MODE pill in AppBar actions next to the profile avatar; tappable → AyanokojiHomeScreen.
+- `lib/features/profile/screens/profile_screen.dart` — added a shield icon in the AppBar that opens the Ayanokoji hub.
+
+`flutter analyze`: 0 errors, 0 warnings, 9 info-level lints (8 pre-existing + 1 new cosmetic `${...}` brace in reaction_time_game). Phase compiles clean.
+
 ### Phase 3: Gamification
 
 Built XP/levels/titles/achievements per PDF section 10. User picked: all four XP sources (study minutes / habit completions / prayers / workouts) feeding one XP pool; quadratic level curve (N² × 100); Dashboard hero card + dedicated Achievements screen pushed from Profile; in-app celebration overlay on unlock or level-up (no notification).

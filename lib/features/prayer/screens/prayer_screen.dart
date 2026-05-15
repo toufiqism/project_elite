@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:hijri/hijri_calendar.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../shared/widgets/elite_card.dart';
+import '../../islamic/data/dua_service.dart';
+import '../../islamic/screens/duas_screen.dart';
+import '../../islamic/screens/qibla_screen.dart';
+import '../../islamic/screens/tasbih_screen.dart';
 import '../../profile/state/profile_controller.dart';
 import '../state/prayer_controller.dart';
 
@@ -37,14 +42,50 @@ class _PrayerScreenState extends State<PrayerScreen> {
     final prayer = context.watch<PrayerController>();
     final times = prayer.times;
 
+    final hijri = HijriCalendar.now();
+    final hijriLabel =
+        '${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear} AH';
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Prayer'),
+        titleSpacing: 20,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Prayer',
+                style: TextStyle(
+                  color: AppColors.text,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                )),
+            Text(hijriLabel,
+                style: const TextStyle(
+                  color: AppColors.muted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                )),
+          ],
+        ),
         actions: [
           IconButton(
+            tooltip: 'Tasbih',
+            icon: const Icon(Icons.fingerprint),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const TasbihScreen()),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Qibla',
+            icon: const Icon(Icons.explore_outlined),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const QiblaScreen()),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Refresh location',
             icon: const Icon(Icons.my_location),
             onPressed: () => prayer.fetchLocation(),
-            tooltip: 'Refresh location',
           ),
         ],
       ),
@@ -114,8 +155,70 @@ class _PrayerScreenState extends State<PrayerScreen> {
             const SectionHeader(title: 'Today\'s prayer times'),
             ...PrayerSlot.values.map((slot) => _slotTile(prayer, slot)),
           ],
+          const SizedBox(height: 24),
+          _duaOfDayCard(context),
         ],
       ),
+    );
+  }
+
+  Widget _duaOfDayCard(BuildContext context) {
+    final dua = DuaService.instance.duaOfTheDay();
+    if (dua == null) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: 'Dua of the day',
+          action: 'All duas',
+          onAction: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const DuasScreen()),
+          ),
+        ),
+        EliteCard(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const DuasScreen()),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(dua.title,
+                  style: const TextStyle(
+                    color: AppColors.text,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  )),
+              const SizedBox(height: 12),
+              Text(
+                dua.arabic,
+                textDirection: TextDirection.rtl,
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  color: AppColors.accent,
+                  fontSize: 20,
+                  height: 1.7,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                dua.transliteration,
+                style: const TextStyle(
+                  color: AppColors.text,
+                  fontStyle: FontStyle.italic,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(dua.meaning,
+                  style: const TextStyle(
+                      color: AppColors.muted, height: 1.4)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

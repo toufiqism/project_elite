@@ -34,6 +34,39 @@ class NotificationController extends ChangeNotifier {
 
   bool _initialized = false;
 
+  /// When true, all scheduled notifications use the Discipline tone regardless
+  /// of the user-chosen `_settings.tone`. Toggled by Ayanokoji discipline mode.
+  bool _disciplineOverride = false;
+  PrayerTimes? _lastPrayerTimes;
+
+  NotificationTone get _effectiveTone =>
+      _disciplineOverride ? NotificationTone.discipline : _settings.tone;
+
+  /// Called from the provider proxy with the current discipline-mode state.
+  /// Cheaply guarded: only reschedules when something actually changed.
+  Future<void> applyContext({
+    PrayerTimes? prayerTimes,
+    required bool disciplineMode,
+  }) async {
+    final overrideChanged = _disciplineOverride != disciplineMode;
+    final timesChanged = !_samePrayerTimes(_lastPrayerTimes, prayerTimes);
+    _disciplineOverride = disciplineMode;
+    _lastPrayerTimes = prayerTimes;
+    if (overrideChanged || timesChanged) {
+      await reschedule(prayerTimes: prayerTimes);
+    }
+  }
+
+  bool _samePrayerTimes(PrayerTimes? a, PrayerTimes? b) {
+    if (a == null && b == null) return true;
+    if (a == null || b == null) return false;
+    return a.fajr == b.fajr &&
+        a.dhuhr == b.dhuhr &&
+        a.asr == b.asr &&
+        a.maghrib == b.maghrib &&
+        a.isha == b.isha;
+  }
+
   NotificationController() {
     final raw = _box.get(_key);
     if (raw is Map) {
@@ -70,7 +103,7 @@ class NotificationController extends ChangeNotifier {
     await _svc.cancelAll();
 
     final s = _settings;
-    final tone = s.tone;
+    final tone = _effectiveTone;
 
     if (s.prayerOn && prayerTimes != null) {
       await _scheduleAllPrayers(prayerTimes, tone);

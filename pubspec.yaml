@@ -42,6 +42,10 @@ dependencies:
   # HTTP for fitness API
   http: ^1.2.2
 
+  # Islamic features
+  hijri: ^3.0.0
+  flutter_compass: ^0.8.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -49,3 +53,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/duas.json

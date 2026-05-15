@@ -11,6 +11,10 @@ class HiveBoxes {
   static const exerciseCache = 'box_exercise_cache';
   static const workoutSessions = 'box_workout_sessions';
   static const weightLog = 'box_weight_log';
+  static const focusSessions = 'box_focus_sessions';
+  static const socialRatings = 'box_social_ratings';
+  static const gameResults = 'box_game_results';
+  static const tasbih = 'box_tasbih';
 }
 
 class HiveSetup {
@@ -27,6 +31,10 @@ class HiveSetup {
       Hive.openBox(HiveBoxes.exerciseCache),
       Hive.openBox(HiveBoxes.workoutSessions),
       Hive.openBox(HiveBoxes.weightLog),
+      Hive.openBox(HiveBoxes.focusSessions),
+      Hive.openBox(HiveBoxes.socialRatings),
+      Hive.openBox(HiveBoxes.gameResults),
+      Hive.openBox(HiveBoxes.tasbih),
     ]);
   }
 }

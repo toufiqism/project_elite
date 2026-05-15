@@ -4,9 +4,12 @@ import 'package:provider/provider.dart';
 
 import 'core/storage/hive_setup.dart';
 import 'core/theme/app_theme.dart';
+import 'features/ayanokoji/state/ayanokoji_controller.dart';
 import 'features/fitness/state/fitness_controller.dart';
 import 'features/gamification/state/gamification_controller.dart';
 import 'features/habits/state/habit_controller.dart';
+import 'features/islamic/data/dua_service.dart';
+import 'features/islamic/state/tasbih_controller.dart';
 import 'features/notifications/service/notification_service.dart';
 import 'features/notifications/state/notification_controller.dart';
 import 'features/prayer/state/prayer_controller.dart';
@@ -23,6 +26,7 @@ Future<void> main() async {
   ));
   await HiveSetup.init();
   await NotificationService.instance.init();
+  await DuaService.instance.load();
   runApp(const ProjectEliteApp());
 }
 
@@ -37,6 +41,7 @@ class ProjectEliteApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => StudyController()),
         ChangeNotifierProvider(create: (_) => HabitController()),
         ChangeNotifierProvider(create: (_) => FitnessController()),
+        ChangeNotifierProvider(create: (_) => TasbihController()),
         ChangeNotifierProxyProvider<ProfileController, PrayerController>(
           create: (_) => PrayerController(),
           update: (_, profile, prayer) {
@@ -50,13 +55,31 @@ class ProjectEliteApp extends StatelessWidget {
             return ctrl;
           },
         ),
-        ChangeNotifierProxyProvider<PrayerController, NotificationController>(
+        ChangeNotifierProxyProvider4<StudyController, HabitController,
+            PrayerController, FitnessController, AyanokojiController>(
+          create: (_) => AyanokojiController(),
+          update: (_, study, habits, prayer, fitness, ayano) {
+            final ctrl = ayano ?? AyanokojiController();
+            ctrl.recompute(
+              study: study,
+              habits: habits,
+              prayer: prayer,
+              fitness: fitness,
+            );
+            return ctrl;
+          },
+        ),
+        ChangeNotifierProxyProvider2<PrayerController, AyanokojiController,
+            NotificationController>(
           create: (_) => NotificationController(),
-          update: (_, prayer, notif) {
+          update: (_, prayer, ayano, notif) {
             final ctrl = notif ?? NotificationController();
-            // Reschedule whenever prayer times become available or change.
-            // Fire-and-forget; controller guards against concurrent inits.
-            ctrl.reschedule(prayerTimes: prayer.times);
+            // Cheaply guarded: only reschedules if prayer times or discipline-
+            // override changed. Fire-and-forget.
+            ctrl.applyContext(
+              prayerTimes: prayer.times,
+              disciplineMode: ayano.disciplineMode,
+            );
             return ctrl;
           },
         ),

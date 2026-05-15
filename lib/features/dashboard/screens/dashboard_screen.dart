@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../shared/widgets/elite_card.dart';
+import '../../ayanokoji/screens/ayanokoji_home_screen.dart';
+import '../../ayanokoji/state/ayanokoji_controller.dart';
 import '../../fitness/state/fitness_controller.dart';
 import '../../gamification/screens/achievements_screen.dart';
 import '../../gamification/state/gamification_controller.dart';
@@ -45,6 +47,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final prayer = context.watch<PrayerController>();
     final fitness = context.watch<FitnessController>();
     final gam = context.watch<GamificationController>();
+    final ayano = context.watch<AyanokojiController>();
 
     final goalHours = p?.studyGoalHoursPerDay ?? 5;
     final studySeconds = study.totalToday().inSeconds;
@@ -98,8 +101,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
+          GestureDetector(
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const AyanokojiHomeScreen(),
+              ),
+            ),
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: ayano.disciplineMode
+                    ? AppColors.accent
+                    : AppColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                ayano.disciplineMode ? 'AYANOKOJI' : 'NORMAL',
+                style: TextStyle(
+                  color: ayano.disciplineMode
+                      ? AppColors.background
+                      : AppColors.muted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ),
+          ),
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: 12, left: 10),
             child: GestureDetector(
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const ProfileScreen()),
