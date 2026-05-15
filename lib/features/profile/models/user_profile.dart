@@ -23,6 +23,7 @@ class UserProfile {
 
   final double? latitude;
   final double? longitude;
+  final String? prayerAddress;
 
   final DateTime createdAt;
 
@@ -49,6 +50,7 @@ class UserProfile {
     required this.createdAt,
     this.latitude,
     this.longitude,
+    this.prayerAddress,
   });
 
   double get bmi {
@@ -79,6 +81,7 @@ class UserProfile {
     String? preferredWorkoutType,
     double? latitude,
     double? longitude,
+    String? prayerAddress,
   }) {
     return UserProfile(
       name: name ?? this.name,
@@ -103,6 +106,7 @@ class UserProfile {
       preferredWorkoutType: preferredWorkoutType ?? this.preferredWorkoutType,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      prayerAddress: prayerAddress ?? this.prayerAddress,
       createdAt: createdAt,
     );
   }
@@ -129,6 +133,7 @@ class UserProfile {
         'preferredWorkoutType': preferredWorkoutType,
         'latitude': latitude,
         'longitude': longitude,
+        'prayerAddress': prayerAddress,
         'createdAt': createdAt.toIso8601String(),
       };
 
@@ -156,6 +161,7 @@ class UserProfile {
         preferredWorkoutType: json['preferredWorkoutType'] as String,
         latitude: (json['latitude'] as num?)?.toDouble(),
         longitude: (json['longitude'] as num?)?.toDouble(),
+        prayerAddress: json['prayerAddress'] as String?,
         createdAt: DateTime.parse(json['createdAt'] as String),
       );
 }

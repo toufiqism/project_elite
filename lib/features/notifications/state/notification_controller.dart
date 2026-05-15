@@ -1,4 +1,3 @@
-import 'package:adhan/adhan.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
@@ -37,7 +36,7 @@ class NotificationController extends ChangeNotifier {
   /// When true, all scheduled notifications use the Discipline tone regardless
   /// of the user-chosen `_settings.tone`. Toggled by Ayanokoji discipline mode.
   bool _disciplineOverride = false;
-  PrayerTimes? _lastPrayerTimes;
+  Map<PrayerSlot, DateTime>? _lastPrayerTimes;
 
   NotificationTone get _effectiveTone =>
       _disciplineOverride ? NotificationTone.discipline : _settings.tone;
@@ -45,7 +44,7 @@ class NotificationController extends ChangeNotifier {
   /// Called from the provider proxy with the current discipline-mode state.
   /// Cheaply guarded: only reschedules when something actually changed.
   Future<void> applyContext({
-    PrayerTimes? prayerTimes,
+    Map<PrayerSlot, DateTime>? prayerTimes,
     required bool disciplineMode,
   }) async {
     final overrideChanged = _disciplineOverride != disciplineMode;
@@ -57,14 +56,13 @@ class NotificationController extends ChangeNotifier {
     }
   }
 
-  bool _samePrayerTimes(PrayerTimes? a, PrayerTimes? b) {
+  bool _samePrayerTimes(
+    Map<PrayerSlot, DateTime>? a,
+    Map<PrayerSlot, DateTime>? b,
+  ) {
     if (a == null && b == null) return true;
     if (a == null || b == null) return false;
-    return a.fajr == b.fajr &&
-        a.dhuhr == b.dhuhr &&
-        a.asr == b.asr &&
-        a.maghrib == b.maghrib &&
-        a.isha == b.isha;
+    return PrayerSlot.values.every((s) => a[s] == b[s]);
   }
 
   NotificationController() {
@@ -90,7 +88,7 @@ class NotificationController extends ChangeNotifier {
 
   Future<void> update(
     NotificationSettings next, {
-    PrayerTimes? prayerTimes,
+    Map<PrayerSlot, DateTime>? prayerTimes,
   }) async {
     _settings = next;
     await _box.put(_key, next.toJson());
@@ -98,7 +96,7 @@ class NotificationController extends ChangeNotifier {
     await reschedule(prayerTimes: prayerTimes);
   }
 
-  Future<void> reschedule({PrayerTimes? prayerTimes}) async {
+  Future<void> reschedule({Map<PrayerSlot, DateTime>? prayerTimes}) async {
     if (!_initialized) await ensureInitialized();
     await _svc.cancelAll();
 
@@ -135,14 +133,14 @@ class NotificationController extends ChangeNotifier {
     }
   }
 
-  Future<void> _scheduleAllPrayers(PrayerTimes t, NotificationTone tone) async {
-    final pairs = <(PrayerSlot, DateTime)>[
-      (PrayerSlot.fajr, t.fajr),
-      (PrayerSlot.dhuhr, t.dhuhr),
-      (PrayerSlot.asr, t.asr),
-      (PrayerSlot.maghrib, t.maghrib),
-      (PrayerSlot.isha, t.isha),
-    ];
+  Future<void> _scheduleAllPrayers(
+    Map<PrayerSlot, DateTime> times,
+    NotificationTone tone,
+  ) async {
+    final pairs = PrayerSlot.values
+        .map((s) => (s, times[s]))
+        .where((p) => p.$2 != null)
+        .map((p) => (p.$1, p.$2!));
     for (final (slot, at) in pairs) {
       final headsUp = at.subtract(const Duration(minutes: 10));
       final atCopy = _prayerCopy(slot, tone, atTime: true);

@@ -6,6 +6,64 @@ Running log of changes made by Claude across sessions. Newest entries at top.
 
 ## 2026-05-16
 
+### Feature: Prayer times via AlAdhan REST API + address-based lookup + manual slot editing
+
+Replaced the `adhan` package (local lat/lng computation) with the AlAdhan REST API (`https://api.aladhan.com/v1/timingsByAddress`) for prayer times. Users now set a city/address instead of sharing GPS coordinates. Each slot can also be manually overridden and the edit is persisted per-day in Hive.
+
+**Architecture changes:**
+
+- `PrayerController` core type changed from `PrayerTimes` (adhan model) to `Map<PrayerSlot, DateTime>` throughout.
+- `UserProfile` gains a nullable `prayerAddress` field (backwards-compatible `fromJson`). Saved to Hive profile box and synced to `PrayerController` via the existing `ChangeNotifierProxyProvider`.
+- Daily API responses cached in Hive under key `"cache|YYYY-MM-DD"`. Per-slot user overrides stored as `"override|YYYY-MM-DD|slotname"` (HH:MM string). `_withOverrides()` merges them on every read.
+- AlAdhan returns times like `"04:39 (UTC+6)"` — only the first space-token is used to strip timezone info.
+
+**Files changed:**
+
+- `lib/features/prayer/service/aladhan_service.dart` (NEW) — `AladhanService.fetchTimings(address, date)` HTTP client. Method 1 = University of Islamic Sciences, Karachi (same default as previous adhan package).
+- `lib/features/prayer/state/prayer_controller.dart` (REWRITE) — removed adhan/geolocator; added `fetchByAddress`, `setAddress`, `setOverride`, `clearOverride`, `hasOverride`, `_loadCached`, `_reapplyOverrides`, `_withOverrides`, `_toStorable`, `_fromStorable`.
+- `lib/features/profile/models/user_profile.dart` — added `prayerAddress` nullable field.
+- `lib/features/prayer/screens/prayer_screen.dart` (REWRITE) — address card with "Change" button; per-slot edit `IconButton` with "edited" badge; `showTimePicker` → `setOverride` flow with confirmation sheet + "Reset to automatic" option; `_AddressSheet` bottom sheet that saves to `ProfileController` and calls `fetchByAddress`.
+- `lib/features/notifications/state/notification_controller.dart` — removed `adhan` import; `PrayerTimes?` → `Map<PrayerSlot, DateTime>?`; `_samePrayerTimes` rewritten to compare slots by key.
+- `lib/main.dart` — `ChangeNotifierProxyProvider` for `PrayerController` now calls `ctrl.setAddress(profile.profile?.prayerAddress)` instead of `setLocation(lat, lng)`.
+
+`flutter analyze`: 8 pre-existing info-level lints only — no errors or warnings.
+
+### Fix: Scroll clipping behind Android gesture navigation bar (13 screens)
+
+All scrollable screens used `EdgeInsets.all(20)` as list padding. On Android with edge-to-edge gesture navigation, the last card clips under the nav bar. Fixed all 13 ListViews to use `EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(context).padding.bottom)`.
+
+**Screens fixed:**
+
+- `lib/features/study/screens/study_home_screen.dart`
+- `lib/features/study/screens/study_history_screen.dart`
+- `lib/features/fitness/screens/weight_screen.dart`
+- `lib/features/fitness/screens/workout_history_screen.dart`
+- `lib/features/ayanokoji/screens/character_stats_screen.dart`
+- `lib/features/dashboard/screens/dashboard_screen.dart`
+- `lib/features/prayer/screens/prayer_screen.dart`
+- `lib/features/gamification/screens/achievements_screen.dart`
+- `lib/features/reports/screens/reports_screen.dart`
+- `lib/features/habits/screens/habits_screen.dart`
+- `lib/features/settings/screens/settings_screen.dart`
+- `lib/features/fitness/screens/fitness_home_screen.dart`
+- `lib/features/islamic/screens/duas_screen.dart`
+
+`flutter analyze`: no new findings.
+
+### Feature: YouTube search button on exercise cards
+
+Added a YouTube search `IconButton` to each exercise card in the Fitness screens. Tapping opens a YouTube search for the exercise name in the YouTube app (or browser fallback). Uses `LaunchMode.externalApplication` so the YouTube app opens directly if installed.
+
+**Implementation:**
+
+- `pubspec.yaml` — added `url_launcher: ^6.3.0`.
+- `lib/features/fitness/screens/fitness_home_screen.dart` — added `import 'package:url_launcher/url_launcher.dart'`; YouTube `IconButton` on each exercise card. URL pattern: `https://www.youtube.com/results?search_query=${Uri.encodeComponent(name)}`.
+- `lib/features/fitness/screens/workout_session_screen.dart` — same import and button; exercise title + target wrapped in `Row(Expanded(Column(...)), IconButton(...))` to accommodate the icon alongside existing content.
+
+`flutter analyze`: no new findings.
+
+---
+
 ### Feature: User data isolation across accounts
 
 Different Firebase users now see fully isolated data. Previously, local Hive data persisted across logins regardless of which user signed in.

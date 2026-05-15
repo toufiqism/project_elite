@@ -62,13 +62,8 @@ class ProjectEliteApp extends StatelessWidget {
         ChangeNotifierProxyProvider<ProfileController, PrayerController>(
           create: (_) => PrayerController(),
           update: (_, profile, prayer) {
-            final p = profile.profile;
             final ctrl = prayer ?? PrayerController();
-            if (p?.latitude != null &&
-                p?.longitude != null &&
-                ctrl.times == null) {
-              ctrl.setLocation(p!.latitude!, p.longitude!);
-            }
+            ctrl.setAddress(profile.profile?.prayerAddress);
             return ctrl;
           },
         ),
