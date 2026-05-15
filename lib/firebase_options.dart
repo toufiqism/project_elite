@@ -65,7 +65,9 @@ class DefaultFirebaseOptions {
     projectId: 'project-elite-a2d57',
     databaseURL: 'https://project-elite-a2d57-default-rtdb.firebaseio.com',
     storageBucket: 'project-elite-a2d57.firebasestorage.app',
+    androidClientId: '345837181763-h74qs7l4sddskdf0nd1jh0qkktnb7bdm.apps.googleusercontent.com',
     iosClientId: '345837181763-2jod7i44h2esabvuqrbcutj397ni0c5o.apps.googleusercontent.com',
     iosBundleId: 'com.toufiq.elite.projectElite',
   );
+
 }
