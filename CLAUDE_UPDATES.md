@@ -6,6 +6,14 @@ Running log of changes made by Claude across sessions. Newest entries at top.
 
 ## 2026-05-15
 
+### README rewrite
+
+Replaced the one-line `README.md` placeholder with a full project README: product overview, MVP feature list, tech stack, setup/run commands, project structure tree, architecture notes (Hive-without-codegen, time-series key pattern, daily score weights), and a roadmap pointer for the deferred phase-2 systems. Mirrors the deliberate choices recorded in `CLAUDE.md` (local-only Hive, rule-based AI). `flutter analyze` clean (only pre-existing info-level lints).
+
+---
+
+## 2026-05-15
+
 ### Phase 4: Weekly + Monthly Reports
 
 Built PDF section 11. User picked: pushed from Achievements + Profile (no nav change), current-week + current-month scope only (no historical browse), share-as-text via system share sheet.
