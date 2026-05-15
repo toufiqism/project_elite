@@ -20,7 +20,8 @@ class WorkoutHistoryScreen extends StatelessWidget {
                   style: TextStyle(color: AppColors.muted)),
             )
           : ListView.separated(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(
+                  20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
               itemCount: sessions.length,
               separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (_, i) {

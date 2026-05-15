@@ -19,7 +19,8 @@ class CharacterStatsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Character stats')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(
+            20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
         children: [
           EliteCard(
             child: SizedBox(

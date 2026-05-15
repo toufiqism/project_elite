@@ -7,6 +7,7 @@ class UserProfile {
   final double goalWeightKg;
   final String fitnessLevel;
 
+  final String studyMode;
   final String caLevel;
   final List<String> caSubjects;
 
@@ -33,6 +34,7 @@ class UserProfile {
     required this.weightKg,
     required this.goalWeightKg,
     required this.fitnessLevel,
+    required this.studyMode,
     required this.caLevel,
     required this.caSubjects,
     required this.occupation,
@@ -63,6 +65,7 @@ class UserProfile {
     double? weightKg,
     double? goalWeightKg,
     String? fitnessLevel,
+    String? studyMode,
     String? caLevel,
     List<String>? caSubjects,
     String? occupation,
@@ -85,6 +88,7 @@ class UserProfile {
       weightKg: weightKg ?? this.weightKg,
       goalWeightKg: goalWeightKg ?? this.goalWeightKg,
       fitnessLevel: fitnessLevel ?? this.fitnessLevel,
+      studyMode: studyMode ?? this.studyMode,
       caLevel: caLevel ?? this.caLevel,
       caSubjects: caSubjects ?? this.caSubjects,
       occupation: occupation ?? this.occupation,
@@ -111,6 +115,7 @@ class UserProfile {
         'weightKg': weightKg,
         'goalWeightKg': goalWeightKg,
         'fitnessLevel': fitnessLevel,
+        'studyMode': studyMode,
         'caLevel': caLevel,
         'caSubjects': caSubjects,
         'occupation': occupation,
@@ -135,6 +140,7 @@ class UserProfile {
         weightKg: (json['weightKg'] as num).toDouble(),
         goalWeightKg: (json['goalWeightKg'] as num).toDouble(),
         fitnessLevel: json['fitnessLevel'] as String,
+        studyMode: json['studyMode'] as String? ?? 'ca',
         caLevel: json['caLevel'] as String,
         caSubjects: (json['caSubjects'] as List).cast<String>(),
         occupation: json['occupation'] as String,

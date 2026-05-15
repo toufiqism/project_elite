@@ -151,7 +151,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(
+            20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
         children: [
           _xpHeroCard(context, gam),
           const SizedBox(height: 14),

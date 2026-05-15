@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_utils.dart';
@@ -191,18 +192,40 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                         ),
                       ),
                     const SizedBox(height: 14),
-                    Text(
-                      _toTitle(pe.exercise.name),
-                      style: const TextStyle(
-                        color: AppColors.text,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${pe.exercise.target} · ${pe.exercise.equipment}',
-                      style: const TextStyle(color: AppColors.muted),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _toTitle(pe.exercise.name),
+                                style: const TextStyle(
+                                  color: AppColors.text,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${pe.exercise.target} · ${pe.exercise.equipment}',
+                                style: const TextStyle(color: AppColors.muted),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Search on YouTube',
+                          icon: const Icon(Icons.play_circle_outline,
+                              color: AppColors.muted),
+                          onPressed: () => launchUrl(
+                            Uri.parse(
+                                'https://www.youtube.com/results?search_query=${Uri.encodeComponent(pe.exercise.name)}'),
+                            mode: LaunchMode.externalApplication,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

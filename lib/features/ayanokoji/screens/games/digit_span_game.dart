@@ -26,6 +26,7 @@ class _DigitSpanGameState extends State<DigitSpanGame> {
   List<int> _sequence = [];
   int _showingIndex = -1;
   int _maxSpanReached = 0;
+  bool _gameOver = false;
   Timer? _showTimer;
 
   @override
@@ -53,6 +54,7 @@ class _DigitSpanGameState extends State<DigitSpanGame> {
   }
 
   void _submit() {
+    if (_gameOver) return;
     final answer = _input.text.replaceAll(RegExp(r'\s+'), '');
     final expected = _sequence.join();
     if (answer == expected) {
@@ -60,6 +62,7 @@ class _DigitSpanGameState extends State<DigitSpanGame> {
       _spanLength += 1;
       setState(() => _phase = _Phase.idle);
     } else {
+      _gameOver = true;
       _finishGame();
     }
   }

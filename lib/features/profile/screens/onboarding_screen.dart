@@ -28,7 +28,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _goalWeight = TextEditingController();
   String _fitness = FitnessLevel.beginner;
 
-  // CA
+  // Study
+  String _studyMode = StudyMode.ca;
   String _caLevel = CALevel.certificate;
   final Set<String> _selectedSubjects = {};
   final _customSubject = TextEditingController();
@@ -106,7 +107,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         return true;
       case 1:
         if (_selectedSubjects.isEmpty) {
-          _snack('Add at least one CA subject');
+          _snack('Add at least one subject');
           return false;
         }
         return true;
@@ -131,6 +132,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       weightKg: double.parse(_weight.text),
       goalWeightKg: double.parse(_goalWeight.text),
       fitnessLevel: _fitness,
+      studyMode: _studyMode,
       caLevel: _caLevel,
       caSubjects: _selectedSubjects.toList(),
       occupation: _occupation,
@@ -187,7 +189,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 onPageChanged: (i) => setState(() => _page = i),
                 children: [
                   _personalPage(),
-                  _caPage(),
+                  _studyPage(),
                   _lifestylePage(),
                   _finalPage(),
                 ],
@@ -291,59 +293,83 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _caPage() {
+  Widget _studyPage() {
     final stockSubjects = CASubjects.subjectsFor(_caLevel);
     return _pageWrap(
-      title: 'CA path',
-      subtitle: 'Pick your level and the subjects you study.',
+      title: 'Study setup',
+      subtitle: 'Choose your study mode and add the subjects you track.',
       children: [
-        _dropdown('CA Level', _caLevel, CALevel.all, (v) {
-          setState(() {
-            _caLevel = v;
-          });
-        }),
-        const SizedBox(height: 16),
-        const Text('Pick subjects (tap to add)',
-            style: TextStyle(color: AppColors.muted)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: stockSubjects.map((s) {
-            final selected = _selectedSubjects.contains(s);
-            return FilterChip(
-              label: Text(s),
-              selected: selected,
-              onSelected: (v) => setState(() {
-                if (v) {
-                  _selectedSubjects.add(s);
-                } else {
-                  _selectedSubjects.remove(s);
-                }
-              }),
-              backgroundColor: AppColors.surface,
-              selectedColor: AppColors.primary.withValues(alpha: 0.2),
-              checkmarkColor: AppColors.primary,
-              labelStyle: TextStyle(
-                color: selected ? AppColors.primary : AppColors.text,
-              ),
-              shape: StadiumBorder(
-                side: BorderSide(
-                  color: selected ? AppColors.primary : AppColors.surfaceAlt,
-                ),
-              ),
-            );
-          }).toList(),
+        SegmentedButton<String>(
+          segments: const [
+            ButtonSegment(value: StudyMode.ca, label: Text('CA')),
+            ButtonSegment(value: StudyMode.custom, label: Text('Custom')),
+          ],
+          selected: {_studyMode},
+          onSelectionChanged: (v) => setState(() {
+            _studyMode = v.first;
+            _selectedSubjects.clear();
+          }),
         ),
         const SizedBox(height: 20),
-        const Text('Add a custom subject / chapter',
-            style: TextStyle(color: AppColors.muted)),
+        if (_studyMode == StudyMode.ca) ...[
+          _dropdown('CA Level', _caLevel, CALevel.all, (v) {
+            setState(() {
+              _caLevel = v;
+              _selectedSubjects.removeWhere(
+                  (s) => !CASubjects.subjectsFor(v).contains(s));
+            });
+          }),
+          const SizedBox(height: 16),
+          const Text('Pick subjects (tap to add)',
+              style: TextStyle(color: AppColors.muted)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: stockSubjects.map((s) {
+              final selected = _selectedSubjects.contains(s);
+              return FilterChip(
+                label: Text(s),
+                selected: selected,
+                onSelected: (v) => setState(() {
+                  if (v) {
+                    _selectedSubjects.add(s);
+                  } else {
+                    _selectedSubjects.remove(s);
+                  }
+                }),
+                backgroundColor: AppColors.surface,
+                selectedColor: AppColors.primary.withValues(alpha: 0.2),
+                checkmarkColor: AppColors.primary,
+                labelStyle: TextStyle(
+                  color: selected ? AppColors.primary : AppColors.text,
+                ),
+                shape: StadiumBorder(
+                  side: BorderSide(
+                    color: selected ? AppColors.primary : AppColors.surfaceAlt,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+        ],
+        Text(
+          _studyMode == StudyMode.ca
+              ? 'Add a custom subject / chapter'
+              : 'Add your subjects',
+          style: const TextStyle(color: AppColors.muted),
+        ),
         const SizedBox(height: 8),
         Row(children: [
           Expanded(
             child: TextField(
               controller: _customSubject,
-              decoration: const InputDecoration(hintText: 'e.g. Cost Accounting'),
+              decoration: InputDecoration(
+                hintText: _studyMode == StudyMode.ca
+                    ? 'e.g. Cost Accounting'
+                    : 'e.g. Physics, Chapter 3',
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -452,7 +478,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       children: [
         const SizedBox(height: 8),
         _bulletPoint('Daily plan generated from your goals'),
-        _bulletPoint('Study tracker tuned for ${_caLevel} level'),
+        _bulletPoint(_studyMode == StudyMode.ca
+            ? 'Study tracker tuned for $_caLevel level'
+            : 'Study tracker with your custom subjects'),
         _bulletPoint('Habit checklist seeded with 7 disciplines'),
         _bulletPoint(_prayerOn
             ? 'Prayer times calculated from your location'

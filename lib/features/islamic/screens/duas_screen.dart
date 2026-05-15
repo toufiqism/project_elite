@@ -43,7 +43,8 @@ class _DuasScreenState extends State<DuasScreen> {
           ),
           Expanded(
             child: ListView.separated(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(
+                  20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
               itemCount: list.length,
               separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (_, i) => DuaCard(dua: list[i]),

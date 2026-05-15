@@ -18,7 +18,8 @@ class MiniGamesScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Mental development')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(
+            20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
         children: [
           _gameCard(
             context,

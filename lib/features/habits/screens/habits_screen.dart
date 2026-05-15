@@ -35,7 +35,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(
+            20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
         children: [
           EliteCard(
             child: Column(

@@ -55,6 +55,9 @@ dependencies:
   # Reports — share-as-text via system share sheet
   share_plus: ^10.1.2
 
+  # Open URLs (YouTube search for exercises)
+  url_launcher: ^6.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

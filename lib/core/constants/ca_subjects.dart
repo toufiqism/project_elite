@@ -1,3 +1,8 @@
+class StudyMode {
+  static const ca = 'ca';
+  static const custom = 'custom';
+}
+
 class CALevel {
   static const certificate = 'Certificate';
   static const professional = 'Professional';

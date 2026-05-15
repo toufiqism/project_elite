@@ -23,6 +23,7 @@ class _ReactionTimeGameState extends State<ReactionTimeGame> {
   final _rand = Random();
   _Phase _phase = _Phase.idle;
   int _round = 0;
+  bool _gameOver = false;
   final List<int> _times = [];
   Timer? _scheduler;
   Stopwatch? _stopwatch;
@@ -58,11 +59,14 @@ class _ReactionTimeGameState extends State<ReactionTimeGame> {
         setState(() => _phase = _Phase.tooEarly);
         break;
       case _Phase.go:
+        if (_gameOver) return;
         final ms = _stopwatch?.elapsedMilliseconds ?? 1000;
         _times.add(ms);
         _lastMs = ms;
         _round += 1;
         if (_round >= _totalRounds) {
+          _gameOver = true;
+          setState(() => _phase = _Phase.result);
           _finish();
         } else {
           setState(() => _phase = _Phase.result);

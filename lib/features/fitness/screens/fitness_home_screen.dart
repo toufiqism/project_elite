@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_utils.dart';
@@ -66,7 +67,8 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
           if (profile != null) await fc.buildTodayPlan(profile);
         },
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.fromLTRB(
+              20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
           children: [
             _summaryCard(fc, profile?.bmi),
             const SizedBox(height: 20),
@@ -317,6 +319,16 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Search on YouTube',
+                    icon: const Icon(Icons.play_circle_outline,
+                        color: AppColors.muted),
+                    onPressed: () => launchUrl(
+                      Uri.parse(
+                          'https://www.youtube.com/results?search_query=${Uri.encodeComponent(pe.exercise.name)}'),
+                      mode: LaunchMode.externalApplication,
                     ),
                   ),
                 ],
