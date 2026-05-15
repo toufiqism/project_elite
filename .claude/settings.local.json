@@ -5,7 +5,10 @@
       "Read(//mnt/k/**)",
       "Bash(flutter analyze *)",
       "PowerShell(flutter analyze *)",
-      "Bash(flutter pub *)"
+      "Bash(flutter pub *)",
+      "Skill(project-elite)",
+      "Bash(flutter doctor *)",
+      "Bash(C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\\\\keytool *)"
     ]
   }
 }
