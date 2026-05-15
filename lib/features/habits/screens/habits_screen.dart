@@ -122,10 +122,13 @@ class _HabitsScreenState extends State<HabitsScreen> {
                           style: const TextStyle(
                               color: AppColors.muted, fontSize: 12)),
                       const SizedBox(width: 12),
-                      Text(
-                        '${(ctrl.monthSuccessRate(h.id) * 100).toStringAsFixed(0)}% this month',
-                        style: const TextStyle(
-                            color: AppColors.muted, fontSize: 12),
+                      Flexible(
+                        child: Text(
+                          '${(ctrl.monthSuccessRate(h.id) * 100).toStringAsFixed(0)}% this month',
+                          style: const TextStyle(
+                              color: AppColors.muted, fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
