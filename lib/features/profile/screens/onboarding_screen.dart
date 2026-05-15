@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/ca_subjects.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../features/auth/state/auth_controller.dart';
 import '../models/user_profile.dart';
 import '../state/profile_controller.dart';
 
@@ -58,6 +59,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _workoutGoal.dispose();
     _water.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final displayName =
+          context.read<AuthController>().user?.displayName;
+      if (displayName != null && displayName.isNotEmpty && _name.text.isEmpty) {
+        setState(() => _name.text = displayName);
+      }
+    });
   }
 
   void _next() {

@@ -4,6 +4,101 @@ Running log of changes made by Claude across sessions. Newest entries at top.
 
 ---
 
+## 2026-05-16
+
+### Fix: Upload button spins indefinitely
+
+**Root cause:** `batch.commit()`, `_meta().get()`, and `Future.wait(boxSnaps)` in `SyncService` had no timeout. Firestore's `batch.commit()` waits for server acknowledgment — if the Firestore database hasn't been created in the Firebase console yet (or security rules block the write), the SDK retries silently forever rather than throwing, so the spinner never stopped and no error appeared.
+
+- `lib/features/sync/service/sync_service.dart` — added `.timeout(const Duration(seconds: 15), onTimeout: ...)` to all three Firestore awaits (`cloudTimestamp`, `upload`, `restore`). The `onTimeout` callback throws a descriptive `Exception` that is caught by the calling `_upload()` / `_restore()` methods in the Settings screen and shown as an inline error banner.
+
+**If the error "Upload timed out" appears after this fix:** Go to Firebase console → Firestore Database → Create database, then set security rules to allow authenticated users to read/write their own path (`users/{userId}/**`).
+
+`flutter analyze lib/features/sync/`: no issues found.
+
+### Fix: iOS notifications not firing (foreground display)
+
+**Root cause:** `DarwinInitializationSettings` was missing `defaultPresentAlert / defaultPresentBadge / defaultPresentSound / defaultPresentBanner / defaultPresentList`. Without these, iOS silently drops notification banners whenever the app is in the foreground — which is the normal state when testing. The per-notification `DarwinNotificationDetails(presentAlert: true)` controls banner content but the init-level defaults gate whether iOS delivers it to the foreground app at all.
+
+**Secondary note (simulator):** iOS Simulator is generally unreliable for `zonedSchedule` (scheduled) notifications on older Xcode versions. `showNow` (the test button) should always work. For reliable scheduled notification testing, use a physical device.
+
+- `lib/features/notifications/service/notification_service.dart` — added `defaultPresentAlert: true`, `defaultPresentBadge: true`, `defaultPresentSound: true`, `defaultPresentBanner: true`, `defaultPresentList: true` to `DarwinInitializationSettings`.
+
+`flutter analyze`: no issues found.
+
+### Firestore offline persistence
+
+Enabled Firestore offline persistence at app startup so the cloud sync feature works without a network connection and queues writes for later delivery.
+
+- `lib/main.dart` — added `FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: true, cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED)` synchronously after `Firebase.initializeApp()` and before Hive init. Must be set before any Firestore calls. Unlimited cache size chosen by user — Firestore manages eviction automatically.
+- `pubspec.yaml` already had `cloud_firestore ^5.6.0`; no new deps needed.
+
+`flutter analyze lib/main.dart`: no issues found.
+
+---
+
+## 2026-05-15
+
+### Firebase Cloud Sync (Firestore)
+
+Added manual Upload / Restore sync via Firestore. User chose: all data boxes, manual trigger only (button in Settings), most-recent-timestamp-wins conflict strategy (shown to user via UI so they can make an informed choice of direction).
+
+Implementation:
+
+- `pubspec.yaml` — added `cloud_firestore: ^5.6.0`.
+- `lib/features/sync/service/sync_service.dart` — new `SyncService` with three static methods: `cloudTimestamp(uid)` (reads `users/{uid}/sync/meta` for last upload time, single fast read), `upload(uid)` (serializes all 11 data boxes via Firestore batch write; each box is its own document under `users/{uid}/sync/{boxName}` to stay within the 1 MB per-document limit; `meta` doc holds `uploadedAt` server timestamp), `restore(uid)` (reads all box documents in parallel, clears each Hive box, rewrites data). Excluded boxes: `exerciseCache` (API cache), `notifications`, `settings` (device-specific prefs). Synced boxes: `profile`, `study`, `habits`, `habitLogs`, `prayer`, `workoutSessions`, `weightLog`, `focusSessions`, `socialRatings`, `gameResults`, `tasbih`.
+- `lib/features/profile/state/profile_controller.dart` — added `reload()` (calls private `_load()` + `notifyListeners()`).
+- `lib/features/study/state/study_controller.dart` — added `reload()`.
+- `lib/features/habits/state/habit_controller.dart` — added `reload()`.
+- `lib/features/fitness/state/fitness_controller.dart` — added `reload()` (calls `_loadHistory()` + `notifyListeners()`).
+- `lib/features/settings/screens/settings_screen.dart` — added `_SyncSection` StatefulWidget (separate from the StatelessWidget `SettingsScreen`). Shows cloud backup timestamp ("Never backed up" or "Last upload: d MMM y, HH:mm"), Upload and Restore buttons. Upload/Restore show inline spinners while in progress, inline green success or red error banner on completion. Restore shows a confirmation dialog before overwriting. After restore, calls `reload()` on the four above controllers immediately; Ayanokoji/game stats note they refresh on next launch. Sync section placed between Notifications and Account.
+
+Firestore security rules needed (user to configure in console):
+```
+match /users/{userId}/{document=**} {
+  allow read, write: if request.auth != null && request.auth.uid == userId;
+}
+```
+
+`flutter analyze` (changed files): 0 errors, 0 warnings — 2 pre-existing Radio deprecation infos only.
+
+### Password reset / forgot password
+
+Added a forgot-password flow. User choices: link below the Sign in button, bottom sheet UI, inline confirmation on the same sheet.
+
+- `lib/features/auth/screens/auth_screen.dart` — added `_ForgotPasswordSheet` (StatefulWidget), `_FormView`, and `_ConfirmationView` private widgets. Sheet manages its own loading/error/sent state independently of `AuthController` (no state bleed). Form validates email, calls `FirebaseAuth.instance.sendPasswordResetEmail()` directly. On success, transitions in-place to `_ConfirmationView` (envelope icon, "Check your inbox", the submitted email, "Back to sign in" button). Error banner shows mapped Firebase error codes. Sheet is keyboard-aware (`viewInsets.bottom` padding). "Forgot password?" link appears only on the sign-in form (not register), styled as underlined muted text below the Sign in button; taps `showModalBottomSheet`.
+- Added `import 'package:firebase_auth/firebase_auth.dart'` to auth_screen.dart.
+
+`flutter analyze lib/features/auth/`: no issues found.
+
+### Google Sign-In
+
+Added Google as a second authentication method. User choices: Google button above email/password with an "or" divider, works for both sign-in and registration, onboarding pre-filled from Google display name.
+
+- `pubspec.yaml` — added `google_sign_in: ^6.2.1`.
+- `lib/features/auth/state/auth_controller.dart` — added `signInWithGoogle()`: launches `GoogleSignIn().signIn()`, exchanges credential with `FirebaseAuth.signInWithCredential()`. Returns `false` silently if user cancels the picker. `signOut()` now also calls `GoogleSignIn().signOut()` to clear the Google session token.
+- `lib/features/auth/screens/auth_screen.dart` — Google button placed at top of form via `_GoogleButton` widget (styled with `AppColors.surfaceAlt` background, custom `_GoogleGPainter` CustomPainter for the Google "G" logo). "or" divider row separates it from the email/password fields below. `_submitGoogle()` method wired to the button.
+- `lib/features/profile/screens/onboarding_screen.dart` — added `initState()` override with `addPostFrameCallback` that reads `AuthController.user?.displayName` and pre-fills the `_name` TextEditingController if non-empty.
+
+Manual steps required by user: add debug SHA-1 fingerprint to Firebase console (Android), add `REVERSED_CLIENT_ID` URL scheme to `ios/Runner/Info.plist` (iOS).
+
+`flutter analyze` (auth + profile features): no issues found.
+
+### Firebase Authentication
+
+Added email/password authentication with contextual navigation. User choices asked and applied before implementation.
+
+- `pubspec.yaml` — added `firebase_core: ^3.6.0`, `firebase_auth: ^5.3.0`.
+- `lib/firebase_options.dart` — already generated by FlutterFire CLI; no changes needed.
+- `lib/main.dart` — added `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)` before Hive init; added `AuthController` as the first provider in `MultiProvider`; updated `_Root` to three-state contextual navigation: not authenticated → `AuthScreen`, authenticated + no profile → `OnboardingScreen`, authenticated + has profile → `MainShell`.
+- `lib/features/auth/state/auth_controller.dart` — new `ChangeNotifier` wrapping `FirebaseAuth`. Exposes `isAuthenticated`, `isLoading`, `error`, `user`. Methods: `signIn`, `signUp`, `signOut`, `clearError`. Listens to `authStateChanges()` stream so any external sign-out (token expiry, etc.) propagates immediately to `_Root`.
+- `lib/features/auth/screens/auth_screen.dart` — single screen toggling between Login and Register modes. Styled with `AppColors` dark theme. Validates email format and password length. Shows inline error banner on failure, spinner during requests. Toggle link at bottom switches modes and clears errors.
+- `lib/features/settings/screens/settings_screen.dart` — added "Account" section at bottom with a "Sign out" button (danger-red outline style) behind a confirmation dialog.
+
+`flutter analyze` (all changed files): 9 info-level lints, all pre-existing — no errors or warnings introduced.
+
+---
+
 ## 2026-05-15
 
 ### README rewrite

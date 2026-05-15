@@ -43,4 +43,9 @@ class ProfileController extends ChangeNotifier {
     await _box.delete(_key);
     notifyListeners();
   }
+
+  void reload() {
+    _load();
+    notifyListeners();
+  }
 }

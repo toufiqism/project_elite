@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +7,8 @@ import 'package:provider/provider.dart';
 import 'core/storage/hive_setup.dart';
 import 'core/theme/app_theme.dart';
 import 'features/ayanokoji/state/ayanokoji_controller.dart';
+import 'features/auth/screens/auth_screen.dart';
+import 'features/auth/state/auth_controller.dart';
 import 'features/fitness/state/fitness_controller.dart';
 import 'features/gamification/state/gamification_controller.dart';
 import 'features/habits/state/habit_controller.dart';
@@ -16,6 +20,7 @@ import 'features/prayer/state/prayer_controller.dart';
 import 'features/profile/screens/onboarding_screen.dart';
 import 'features/profile/state/profile_controller.dart';
 import 'features/study/state/study_controller.dart';
+import 'firebase_options.dart';
 import 'main_shell.dart';
 
 Future<void> main() async {
@@ -24,6 +29,11 @@ Future<void> main() async {
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
   ));
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
   await HiveSetup.init();
   await NotificationService.instance.init();
   await DuaService.instance.load();
@@ -37,6 +47,7 @@ class ProjectEliteApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthController()),
         ChangeNotifierProvider(create: (_) => ProfileController()),
         ChangeNotifierProvider(create: (_) => StudyController()),
         ChangeNotifierProvider(create: (_) => HabitController()),
@@ -113,8 +124,10 @@ class _Root extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final profile = context.watch<ProfileController>();
-    if (!profile.hasProfile) {
+    if (!context.watch<AuthController>().isAuthenticated) {
+      return const AuthScreen();
+    }
+    if (!context.watch<ProfileController>().hasProfile) {
       return const OnboardingScreen();
     }
     return const MainShell();

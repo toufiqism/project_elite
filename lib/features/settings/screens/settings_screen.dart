@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/elite_card.dart';
+import '../../auth/state/auth_controller.dart';
 import '../../fitness/state/fitness_controller.dart';
+import '../../habits/state/habit_controller.dart';
 import '../../notifications/models/notification_settings.dart';
 import '../../notifications/service/notification_service.dart';
 import '../../notifications/state/notification_controller.dart';
 import '../../prayer/state/prayer_controller.dart';
+import '../../profile/state/profile_controller.dart';
+import '../../study/state/study_controller.dart';
+import '../../sync/service/sync_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -51,7 +57,8 @@ class SettingsScreen extends StatelessWidget {
                 _toggle(
                   icon: Icons.menu_book,
                   title: 'Study block',
-                  subtitle: 'Daily reminder at ${_fmtTime(s.studyHour, s.studyMinute)}',
+                  subtitle:
+                      'Daily reminder at ${_fmtTime(s.studyHour, s.studyMinute)}',
                   value: s.studyOn,
                   onChanged: (v) => apply(s.copyWith(studyOn: v)),
                 ),
@@ -117,9 +124,7 @@ class SettingsScreen extends StatelessWidget {
               await ctrl.fireTest();
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Test notification fired.'),
-                  ),
+                  const SnackBar(content: Text('Test notification fired.')),
                 );
               }
             },
@@ -138,9 +143,56 @@ class SettingsScreen extends StatelessWidget {
               child: Text('Reschedule all notifications'),
             ),
           ),
+          const SizedBox(height: 32),
+          const SectionHeader(title: 'Cloud Sync'),
+          const SizedBox(height: 8),
+          const _SyncSection(),
+          const SizedBox(height: 32),
+          const SectionHeader(title: 'Account'),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => _confirmSignOut(context),
+            icon: const Icon(Icons.logout, color: AppColors.danger),
+            label: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text('Sign out',
+                  style: TextStyle(color: AppColors.danger)),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.danger),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _confirmSignOut(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Sign out?'),
+        content: const Text(
+          'You will need to sign in again to access your data.',
+          style: TextStyle(color: AppColors.muted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            child: const Text('Sign out'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true && context.mounted) {
+      await context.read<AuthController>().signOut();
+    }
   }
 
   Widget _apiKeyCard(BuildContext context, FitnessController fitness) {
@@ -221,7 +273,8 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _toneSelector(NotificationTone current, ValueChanged<NotificationTone> onPick) {
+  Widget _toneSelector(
+      NotificationTone current, ValueChanged<NotificationTone> onPick) {
     final items = [
       (
         NotificationTone.silent,
@@ -265,7 +318,9 @@ class SettingsScreen extends StatelessWidget {
                     children: [
                       Text(t.$2,
                           style: TextStyle(
-                            color: selected ? AppColors.primary : AppColors.text,
+                            color: selected
+                                ? AppColors.primary
+                                : AppColors.text,
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
                           )),
@@ -310,7 +365,8 @@ class SettingsScreen extends StatelessWidget {
           )),
       subtitle: Text(subtitle,
           style: const TextStyle(color: AppColors.muted, fontSize: 12)),
-      secondary: Icon(icon, color: value ? AppColors.primary : AppColors.muted),
+      secondary:
+          Icon(icon, color: value ? AppColors.primary : AppColors.muted),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14),
     );
   }
@@ -332,7 +388,8 @@ class SettingsScreen extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(label, style: const TextStyle(color: AppColors.muted)),
+          child:
+              Text(label, style: const TextStyle(color: AppColors.muted)),
         ),
         TextButton(
           onPressed: () async {
@@ -400,4 +457,227 @@ class SettingsScreen extends StatelessWidget {
   }
 
   String _fmtHour(int h) => '${h.toString().padLeft(2, '0')}:00';
+}
+
+// ── Cloud Sync section ────────────────────────────────────────────────────────
+
+class _SyncSection extends StatefulWidget {
+  const _SyncSection();
+
+  @override
+  State<_SyncSection> createState() => _SyncSectionState();
+}
+
+class _SyncSectionState extends State<_SyncSection> {
+  DateTime? _cloudTs;
+  bool _loadingTs = true;
+  bool _uploading = false;
+  bool _restoring = false;
+  String? _error;
+  String? _success;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTimestamp();
+  }
+
+  Future<void> _fetchTimestamp() async {
+    final uid = context.read<AuthController>().user?.uid;
+    if (uid == null) {
+      setState(() => _loadingTs = false);
+      return;
+    }
+    try {
+      final ts = await SyncService.cloudTimestamp(uid);
+      if (mounted) {
+        setState(() {
+          _cloudTs = ts;
+          _loadingTs = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingTs = false);
+    }
+  }
+
+  Future<void> _upload() async {
+    final uid = context.read<AuthController>().user?.uid;
+    if (uid == null) return;
+    setState(() {
+      _uploading = true;
+      _error = null;
+      _success = null;
+    });
+    try {
+      await SyncService.upload(uid);
+      final ts = await SyncService.cloudTimestamp(uid);
+      if (mounted) {
+        setState(() {
+          _cloudTs = ts;
+          _success = 'Backup uploaded successfully.';
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Upload failed: $e');
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  Future<void> _restore() async {
+    final uid = context.read<AuthController>().user?.uid;
+    if (uid == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Restore from cloud?'),
+        content: const Text(
+          'This will overwrite all local data with your cloud backup. '
+          'This cannot be undone.',
+          style: TextStyle(color: AppColors.muted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dctx, true),
+            style: FilledButton.styleFrom(
+                backgroundColor: AppColors.warning),
+            child: const Text('Restore',
+                style: TextStyle(color: AppColors.background)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() {
+      _restoring = true;
+      _error = null;
+      _success = null;
+    });
+    try {
+      await SyncService.restore(uid);
+      if (!mounted) return;
+      context.read<ProfileController>().reload();
+      context.read<StudyController>().reload();
+      context.read<HabitController>().reload();
+      context.read<FitnessController>().reload();
+      setState(() => _success =
+          'Data restored. Ayanokoji stats will refresh on next launch.');
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Restore failed: $e');
+    } finally {
+      if (mounted) setState(() => _restoring = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final busy = _uploading || _restoring;
+
+    return EliteCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.cloud_outlined,
+                  color: AppColors.primary, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Cloud backup',
+                        style: TextStyle(
+                            color: AppColors.text,
+                            fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    _loadingTs
+                        ? const Text('Checking…',
+                            style: TextStyle(
+                                color: AppColors.muted, fontSize: 12))
+                        : Text(
+                            _cloudTs == null
+                                ? 'Never backed up'
+                                : 'Last upload: ${DateFormat('d MMM y, HH:mm').format(_cloudTs!.toLocal())}',
+                            style: const TextStyle(
+                                color: AppColors.muted, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.danger.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(_error!,
+                  style: const TextStyle(
+                      color: AppColors.danger, fontSize: 12)),
+            ),
+          ],
+          if (_success != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(_success!,
+                  style: const TextStyle(
+                      color: AppColors.success, fontSize: 12)),
+            ),
+          ],
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: busy ? null : _upload,
+                  icon: _uploading
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.primary))
+                      : const Icon(Icons.cloud_upload_outlined, size: 18),
+                  label: const Text('Upload'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: busy ? null : _restore,
+                  icon: _restoring
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: AppColors.text))
+                      : const Icon(Icons.cloud_download_outlined,
+                          size: 18),
+                  label: const Text('Restore'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

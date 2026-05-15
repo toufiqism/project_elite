@@ -39,6 +39,12 @@ dependencies:
   timezone: ^0.10.0
   flutter_timezone: ^4.0.0
 
+  # Firebase
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.0
+  cloud_firestore: ^5.6.0
+  google_sign_in: ^6.2.1
+
   # HTTP for fitness API
   http: ^1.2.2
 

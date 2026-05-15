@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "345837181763",
+    "firebase_url": "https://project-elite-a2d57-default-rtdb.firebaseio.com",
+    "project_id": "project-elite-a2d57",
+    "storage_bucket": "project-elite-a2d57.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:345837181763:android:aa231e43638c3f20106df6",
+        "android_client_info": {
+          "package_name": "com.toufiq.elite.project_elite"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "345837181763-p3tti5nuo1j7ii8k2qnkeeek02t1v09c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAki3rQKksJB_lZq16F40o1gn9N7-NxwB0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "345837181763-p3tti5nuo1j7ii8k2qnkeeek02t1v09c.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "345837181763-2jod7i44h2esabvuqrbcutj397ni0c5o.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.toufiq.elite.projectElite"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

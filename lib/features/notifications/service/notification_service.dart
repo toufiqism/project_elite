@@ -37,6 +37,13 @@ class NotificationService {
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
+      // Show notifications while the app is in the foreground.
+      // Without these, iOS silently drops banners when the app is open.
+      defaultPresentAlert: true,
+      defaultPresentBadge: true,
+      defaultPresentSound: true,
+      defaultPresentBanner: true,
+      defaultPresentList: true,
     );
     await _plugin.initialize(
       const InitializationSettings(android: android, iOS: ios),

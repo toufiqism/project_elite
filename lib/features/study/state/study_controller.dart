@@ -98,4 +98,9 @@ class StudyController extends ChangeNotifier {
         .fold<int>(0, (a, s) => a + s.durationSeconds);
     return Duration(seconds: seconds);
   }
+
+  void reload() {
+    _load();
+    notifyListeners();
+  }
 }

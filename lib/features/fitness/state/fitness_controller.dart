@@ -147,4 +147,9 @@ class FitnessController extends ChangeNotifier {
 
   double? get latestWeight =>
       _weights.isEmpty ? null : _weights.last.weightKg;
+
+  void reload() {
+    _loadHistory();
+    notifyListeners();
+  }
 }

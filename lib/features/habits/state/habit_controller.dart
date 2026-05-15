@@ -117,4 +117,9 @@ class HabitController extends ChangeNotifier {
     if (counted == 0) return 0;
     return done / counted;
   }
+
+  void reload() {
+    _load();
+    notifyListeners();
+  }
 }
