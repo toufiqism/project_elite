@@ -144,6 +144,9 @@ class SettingsScreen extends StatelessWidget {
               child: Text('Reschedule all notifications'),
             ),
           ),
+          const SizedBox(height: 24),
+          const SectionHeader(title: 'Reliability'),
+          const _BatteryOptimizationCard(),
           const SizedBox(height: 32),
           const SectionHeader(title: 'Cloud Sync'),
           const SizedBox(height: 8),
@@ -681,6 +684,107 @@ class _SyncSectionState extends State<_SyncSection> {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Battery optimization section ──────────────────────────────────────────────
+
+class _BatteryOptimizationCard extends StatefulWidget {
+  const _BatteryOptimizationCard();
+
+  @override
+  State<_BatteryOptimizationCard> createState() =>
+      _BatteryOptimizationCardState();
+}
+
+class _BatteryOptimizationCardState extends State<_BatteryOptimizationCard>
+    with WidgetsBindingObserver {
+  bool _loading = true;
+  bool _exempt = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _refresh();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Re-check when the user returns from the system settings screen.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final exempt =
+        await NotificationService.instance.isIgnoringBatteryOptimizations();
+    if (mounted) {
+      setState(() {
+        _exempt = exempt;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _request() async {
+    await NotificationService.instance.requestIgnoreBatteryOptimizations();
+    await _refresh();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return EliteCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                _exempt ? Icons.check_circle : Icons.battery_alert,
+                color: _exempt ? AppColors.success : AppColors.warning,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Background reliability',
+                        style: TextStyle(
+                            color: AppColors.text,
+                            fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text(
+                      _loading
+                          ? 'Checking…'
+                          : _exempt
+                              ? 'Battery optimization is off for this app. Notifications will fire even when the app is closed.'
+                              : 'Android may kill scheduled notifications when the app is closed. Whitelist this app to ensure reminders fire on time.',
+                      style: const TextStyle(
+                          color: AppColors.muted, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (!_loading && !_exempt) ...[
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _request,
+              icon: const Icon(Icons.bolt, size: 18),
+              label: const Text('Allow background activity'),
+            ),
+          ],
         ],
       ),
     );

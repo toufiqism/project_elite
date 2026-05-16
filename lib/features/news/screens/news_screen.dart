@@ -6,6 +6,9 @@ import '../models/news_article.dart';
 import '../state/news_controller.dart';
 import 'article_webview_screen.dart';
 
+// Flip to true to bring the Local tab back.
+const _showLocal = false;
+
 class NewsScreen extends StatefulWidget {
   const NewsScreen({super.key});
 
@@ -26,36 +29,52 @@ class _NewsScreenState extends State<NewsScreen> {
   Widget build(BuildContext context) {
     final news = context.watch<NewsController>();
 
+    final intlView = _ArticleListView(
+      articles: news.international,
+      loading: news.loadingIntl,
+      error: news.intlError,
+      onRefresh: news.refreshIntl,
+      emptyLabel: 'No international news available',
+    );
+
+    final appBar = AppBar(
+      titleSpacing: 20,
+      title: const Text(
+        'News',
+        style: TextStyle(
+          color: AppColors.text,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      actions: [
+        IconButton(
+          tooltip: 'Refresh',
+          icon: const Icon(Icons.refresh),
+          onPressed: () => Future.wait([
+            if (_showLocal) news.refreshLocal(),
+            news.refreshIntl(),
+          ]),
+        ),
+      ],
+      bottom: _showLocal
+          ? const TabBar(
+              tabs: [
+                Tab(text: 'Local'),
+                Tab(text: 'International'),
+              ],
+            )
+          : null,
+    );
+
+    if (!_showLocal) {
+      return Scaffold(appBar: appBar, body: intlView);
+    }
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
-          titleSpacing: 20,
-          title: const Text(
-            'News',
-            style: TextStyle(
-              color: AppColors.text,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          actions: [
-            IconButton(
-              tooltip: 'Refresh',
-              icon: const Icon(Icons.refresh),
-              onPressed: () => Future.wait([
-                news.refreshLocal(),
-                news.refreshIntl(),
-              ]),
-            ),
-          ],
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Local'),
-              Tab(text: 'International'),
-            ],
-          ),
-        ),
+        appBar: appBar,
         body: TabBarView(
           children: [
             _ArticleListView(
@@ -66,13 +85,7 @@ class _NewsScreenState extends State<NewsScreen> {
               emptyLabel:
                   'No local news for ${news.countryCode.toUpperCase()}',
             ),
-            _ArticleListView(
-              articles: news.international,
-              loading: news.loadingIntl,
-              error: news.intlError,
-              onRefresh: news.refreshIntl,
-              emptyLabel: 'No international news available',
-            ),
+            intlView,
           ],
         ),
       ),

@@ -6,6 +6,64 @@ Running log of changes made by Claude across sessions. Newest entries at top.
 
 ## 2026-05-16
 
+### Notifications: fire reliably when app is closed
+
+User reported scheduled notifications not firing at all when the app is force-closed. Root causes for "alarm never fires" on modern Android are (1) `inexactAllowWhileIdle` schedule mode (Doze batches/drops these indefinitely) and (2) aggressive battery optimization on OEMs like Xiaomi/OPPO/Samsung/Huawei. Fixed both.
+
+**Changes:**
+
+- `lib/features/notifications/service/notification_service.dart`:
+  - `scheduleAt` and `scheduleDaily` switched from `AndroidScheduleMode.inexactAllowWhileIdle` → `exactAllowWhileIdle`. This is the actual mechanism that survives Doze.
+  - `requestPermissions()` now also calls `android.requestExactAlarmsPermission()` — without this, Android 12+ silently falls back to inexact even when we ask for exact.
+  - New `isIgnoringBatteryOptimizations()` and `requestIgnoreBatteryOptimizations()` helpers using `permission_handler`'s `Permission.ignoreBatteryOptimizations`.
+- `android/app/src/main/AndroidManifest.xml`: added `USE_EXACT_ALARM`, `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`, `WAKE_LOCK`, `FOREGROUND_SERVICE` permissions.
+- `lib/features/settings/screens/settings_screen.dart`: new **Reliability** section with `_BatteryOptimizationCard` — shows current status (battery optimization on/off), and exposes a "Allow background activity" `FilledButton` that opens the system whitelist dialog. Uses `WidgetsBindingObserver` to re-check on `AppLifecycleState.resumed` (after the user returns from system settings).
+
+**iOS:** unchanged — `UNUserNotificationCenter` scheduled notifications already fire when the app is killed, no analogous battery-optimization concept.
+
+**Files changed:**
+
+- `lib/features/notifications/service/notification_service.dart`
+- `lib/features/settings/screens/settings_screen.dart`
+- `android/app/src/main/AndroidManifest.xml`
+
+`flutter analyze lib/features/notifications lib/features/settings`: 2 pre-existing `Radio` deprecation lints, no new issues.
+
+---
+
+### News: Local tab hidden behind a feature flag
+
+Hid the "Local" section in the News tab. International articles now fill the screen with no TabBar. The Local code path is gated by `const _showLocal = false;` at the top of `news_screen.dart` so flipping it back to `true` restores the original two-tab UI.
+
+**Behavior with `_showLocal == false`:**
+
+- No `DefaultTabController`/`TabBarView` — just `Scaffold(body: intlView)`.
+- AppBar's `bottom: TabBar` becomes `null`.
+- Refresh button skips `news.refreshLocal()`.
+- `NewsController` is unchanged; it still detects country and pre-fetches local on `init()` (intentional — keeps the flag a one-line flip). If we want to permanently drop Local, we should also strip the local fetch + geolocation from `NewsController.init()`.
+
+**Files changed:**
+
+- `lib/features/news/screens/news_screen.dart`.
+
+`flutter analyze lib/features/news`: clean.
+
+---
+
+### Doc: ARCHITECTURE.md (full reference)
+
+Added a top-level `ARCHITECTURE.md` covering the entire current codebase — stack, folder layout, `main.dart` startup sequence, the full `MultiProvider` tree (including all proxy providers), per-uid wipe/restore in `_RootState._handleLogin`, all 14 Hive boxes, the time-series key pattern, the controller `recompute()` pattern, and per-feature reference for auth, profile, dashboard, study, habits, prayer, fitness, gamification, ayanokoji, notifications, islamic, news, reports, and sync.
+
+**Drift documented:** `CLAUDE.md` says the dashboard daily-score weights are 40/35/25 (study/habits/prayer), but the live code at `lib/features/dashboard/screens/dashboard_screen.dart:69` is 0.35 study + 0.25 habits + 0.20 prayer + 0.20 fitness — fitness was added as a fourth pillar later. `ARCHITECTURE.md` calls this out and recommends keeping `CLAUDE.md` in sync if the weights change again.
+
+**Files changed:**
+
+- `ARCHITECTURE.md` — new.
+
+`flutter analyze`: 8 pre-existing info-level lints only — no new issues.
+
+---
+
 ### Feature: Prayer city auto-detected from device location
 
 Prayer times city is now set automatically from the device's GPS on the first Prayer tab visit (when no address is stored). Location permission is requested via `geolocator`; lat/lng is reverse-geocoded to `"City, Country"` via `geocoding` (e.g. "Dhaka, Bangladesh") and saved to `UserProfile.prayerAddress`, which triggers the AlAdhan fetch. Falls back silently to the manual-entry UI if permission is denied or location fails.

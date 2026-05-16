@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -61,6 +62,10 @@ class NotificationService {
     if (android != null) {
       final n = await android.requestNotificationsPermission();
       ok = n ?? ok;
+      // Android 12+: SCHEDULE_EXACT_ALARM needs explicit grant. Without this,
+      // zonedSchedule with exactAllowWhileIdle silently falls back to inexact,
+      // which Doze can delay or drop entirely while the app is closed.
+      await android.requestExactAlarmsPermission();
     }
     if (ios != null) {
       final n = await ios.requestPermissions(
@@ -71,6 +76,21 @@ class NotificationService {
       ok = n ?? ok;
     }
     return ok;
+  }
+
+  /// True if the OS will exempt this app from Doze / battery optimization.
+  /// Returns true on iOS (concept doesn't apply).
+  Future<bool> isIgnoringBatteryOptimizations() async {
+    final status = await Permission.ignoreBatteryOptimizations.status;
+    return status.isGranted;
+  }
+
+  /// Asks the OS to exempt this app from battery optimization. On Android this
+  /// opens the system dialog; on aggressive OEMs (Xiaomi, OPPO, Huawei) this
+  /// is the difference between alarms firing and the app being killed.
+  Future<bool> requestIgnoreBatteryOptimizations() async {
+    final status = await Permission.ignoreBatteryOptimizations.request();
+    return status.isGranted;
   }
 
   NotificationDetails _details(
@@ -136,7 +156,7 @@ class NotificationService {
       body,
       scheduled,
       _details(channel, tone),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
@@ -162,7 +182,7 @@ class NotificationService {
       body,
       when,
       _details(channel, tone),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
