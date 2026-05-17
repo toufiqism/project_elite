@@ -327,7 +327,7 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
                         color: AppColors.muted),
                     onPressed: () => launchUrl(
                       Uri.parse(
-                          'https://www.youtube.com/results?search_query=${Uri.encodeComponent(pe.exercise.name)}'),
+                          'https://www.youtube.com/results?search_query=${Uri.encodeComponent("How to do ${pe.exercise.name}")}'),
                       mode: LaunchMode.externalApplication,
                     ),
                   ),
