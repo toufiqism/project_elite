@@ -1,3 +1,4 @@
+import '../../ayanokoji/state/ayanokoji_controller.dart';
 import '../../fitness/state/fitness_controller.dart';
 import '../../habits/state/habit_controller.dart';
 import '../../prayer/state/prayer_controller.dart';
@@ -118,18 +119,12 @@ class GamificationStats {
   }
 }
 
-/// XP rules (user-chosen 2026-05-15):
-/// - 1 XP per minute studied
-/// - 10 XP per habit completion
-/// - 8 XP per prayer
-/// - 1 XP per minute of workout + 30 XP per workout session
+/// Global XP = sum of all six CharacterStats. Single source of truth.
+/// Per-stat formulas live in [AyanokojiController._recomputeStats] and cover:
+/// study minutes, habits, prayers, workouts, focus sessions, mini-games
+/// (digit-span, reaction-time, stroop), streaks, and social ratings.
 class XpRules {
-  static int totalFor(GamificationStats s) {
-    return s.totalStudyMinutes * 1 +
-        s.habitsCompletedTotal * 10 +
-        s.prayersCompletedTotal * 8 +
-        s.totalWorkoutMinutes * 1 +
-        s.workoutSessions * 30;
-  }
+  static int totalFor(AyanokojiController ayanokoji) =>
+      ayanokoji.allStats.fold<int>(0, (a, s) => a + s.xp);
 }
 

@@ -4,6 +4,24 @@ Running log of changes made by Claude across sessions. Newest entries at top.
 
 ---
 
+## 2026-05-17
+
+### Gamification: global XP now sums all CharacterStats
+
+User reported playing a minigame and seeing no change to their XP. Root cause: two parallel XP systems. `GamificationController.totalXp` (drives the global level/title) used `XpRules.totalFor(GamificationStats)`, which only counted study minutes, habit/prayer completions, and workout minutes/sessions. Mini-game XP, focus-session XP, and social-rating XP only flowed into the per-stat XP map inside `AyanokojiController` (the Character Stats screen) — never into global XP.
+
+User chose the consolidation path: global `totalXp` is now the sum of all six `CharacterStats` (intelligence + discipline + strength + focus + consistency + social). Single source of truth — adding a new XP source means updating `AyanokojiController._recomputeStats` and everything downstream picks it up.
+
+**Changes:**
+
+- `lib/features/gamification/models/xp.dart`: `XpRules.totalFor` rewritten to take an `AyanokojiController` and fold `allStats`. Old formula (1/10/8/1+30) deleted.
+- `lib/features/gamification/state/gamification_controller.dart`: `recompute` now takes an `ayanokoji` parameter and feeds it to `XpRules.totalFor`.
+- `lib/main.dart`: `GamificationController` provider upgraded from `ChangeNotifierProxyProvider4` → `ChangeNotifierProxyProvider5` to depend on `AyanokojiController`. Update propagates automatically when `recordGameResult` / `recordFocusSession` / `setSocialRatingToday` call `notifyListeners`.
+
+**Note for future work:** `lib/features/reports/data/reports_service.dart:152-157` still computes a date-scoped `xpInPeriod` inline using the OLD XpRules formula. Reports XP and global XP will now disagree for the same period. Reconciling them needs date-scoped tracking for focus sessions, mini-games, and social ratings, which isn't free — leave for when reports get revisited.
+
+---
+
 ## 2026-05-16
 
 ### Notifications: fire reliably when app is closed

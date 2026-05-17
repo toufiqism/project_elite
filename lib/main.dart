@@ -97,16 +97,18 @@ class ProjectEliteApp extends StatelessWidget {
             return ctrl;
           },
         ),
-        ChangeNotifierProxyProvider4<StudyController, HabitController,
-            PrayerController, FitnessController, GamificationController>(
+        ChangeNotifierProxyProvider5<StudyController, HabitController,
+            PrayerController, FitnessController, AyanokojiController,
+            GamificationController>(
           create: (_) => GamificationController(),
-          update: (_, study, habits, prayer, fitness, gam) {
+          update: (_, study, habits, prayer, fitness, ayano, gam) {
             final ctrl = gam ?? GamificationController();
             ctrl.recompute(
               study: study,
               habits: habits,
               prayer: prayer,
               fitness: fitness,
+              ayanokoji: ayano,
             );
             return ctrl;
           },

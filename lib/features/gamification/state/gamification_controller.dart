@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
 import '../../../core/storage/hive_setup.dart';
+import '../../ayanokoji/state/ayanokoji_controller.dart';
 import '../../fitness/state/fitness_controller.dart';
 import '../../habits/state/habit_controller.dart';
 import '../../prayer/state/prayer_controller.dart';
@@ -49,12 +50,13 @@ class GamificationController extends ChangeNotifier {
   }
 
   /// Pull a fresh snapshot from the source controllers and recompute. Called
-  /// from a `ChangeNotifierProxyProvider4` whenever any source notifies.
+  /// from a `ChangeNotifierProxyProvider5` whenever any source notifies.
   void recompute({
     required StudyController study,
     required HabitController habits,
     required PrayerController prayer,
     required FitnessController fitness,
+    required AyanokojiController ayanokoji,
   }) {
     final next = GamificationStats.from(
       study: study,
@@ -63,7 +65,7 @@ class GamificationController extends ChangeNotifier {
       fitness: fitness,
     );
     _stats = next;
-    _totalXp = XpRules.totalFor(next);
+    _totalXp = XpRules.totalFor(ayanokoji);
     _level = LevelInfo.fromXp(_totalXp);
 
     final unlockedNow = <String>{};
