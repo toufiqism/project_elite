@@ -8,7 +8,14 @@
       "Bash(flutter pub *)",
       "Skill(project-elite)",
       "Bash(flutter doctor *)",
-      "Bash(C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\\\\keytool *)"
+      "Bash(C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\\\\keytool *)",
+      "Bash(curl -s \"https://api.aladhan.com/v1/calendarByAddress/2026/5?address=Dhaka&method=1\" -o /tmp/aladhan_test.json -w \"HTTP %{http_code}\\\\n\")",
+      "Read(//tmp/**)",
+      "Bash(python3 -c \"import sys, json; data=json.load\\(open\\('/tmp/aladhan_test.json'\\)\\); print\\('code:', data.get\\('code'\\)\\); print\\('data type:', type\\(data.get\\('data'\\)\\).__name__\\); d=data.get\\('data'\\); print\\('first elem type:', type\\(d[0] if isinstance\\(d, list\\) else list\\(d.values\\(\\)\\)[0]\\).__name__\\); first=d[0] if isinstance\\(d, list\\) else list\\(d.values\\(\\)\\)[0]; print\\('first keys:', list\\(first.keys\\(\\)\\)\\); print\\('date.gregorian.day type:', type\\(first['date']['gregorian']['day']\\).__name__, 'val:', first['date']['gregorian']['day']\\)\")",
+      "Bash(curl -s \"https://api.aladhan.com/v1/timingsByAddress/22-05-2026?address=Dhaka&method=1\" -o /tmp/aladhan_friday.json -w \"HTTP %{http_code}\\\\n\")",
+      "Bash(node -e \"const d = require\\('/tmp/aladhan_friday.json'\\); console.log\\('weekday:', d.data.date.gregorian.weekday\\); console.log\\('timings keys:', Object.keys\\(d.data.timings\\)\\); console.log\\('Dhuhr:', d.data.timings.Dhuhr\\); console.log\\('Jumua:', d.data.timings.Jumua || d.data.timings.Juma || d.data.timings.Jummah || '\\(none\\)'\\);\")",
+      "Bash(curl -s \"https://api.aladhan.com/v1/timingsByAddress/22-05-2026?address=Dhaka&method=1\")",
+      "Bash(node -e \"const d = require\\('C:/Users/Toufiq/aladhan_friday.json'\\); console.log\\('weekday:', d.data.date.gregorian.weekday\\); console.log\\('timings keys:', Object.keys\\(d.data.timings\\)\\); console.log\\('Dhuhr:', d.data.timings.Dhuhr\\); console.log\\('Jumua:', d.data.timings.Jumua || d.data.timings.Juma || d.data.timings.Jummah || '\\(none\\)'\\);\")"
     ]
   }
 }

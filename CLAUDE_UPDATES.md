@@ -4,6 +4,75 @@ Running log of changes made by Claude across sessions. Newest entries at top.
 
 ---
 
+## 2026-05-22
+
+### Notifications: multi-day prayer window + resume-rearming
+
+User reported notifications becoming infrequent after swipe-killing the app, across stock Android, MIUI/OPPO/Vivo, and iOS. Two distinct problems were stacked.
+
+**Problem 1 — prayer notifications never rolled over to day 2+.** `_scheduleAllPrayers` was scheduling 5 slots × 2 (heads-up + at-time) using one-shot `scheduleAt(TZDateTime)` calls for *today only*. The `ChangeNotifierProxyProvider2` only re-triggers `reschedule` when prayer times change or discipline mode flips — so after today's reminders fired, nothing was queued for tomorrow until the app was reopened and times recomputed. Compounded with aggressive OEMs wiping alarms on swipe-kill, the user effectively got at most one day of reminders per launch.
+
+**Problem 2 — permissions and re-arming were lazy.** `NotificationController.ensureInitialized()` was only called on the first `reschedule`, meaning POST_NOTIFICATIONS / SCHEDULE_EXACT_ALARM dialogs could appear minutes after install. Nothing re-armed alarms when the app returned to the foreground.
+
+**Changes:**
+
+- `lib/features/prayer/service/aladhan_service.dart`: new `fetchMonth(address, year, month)` calling AlAdhan's `calendarByAddress` endpoint — fetches a whole month of prayer times in one HTTP request instead of N day-by-day calls.
+- `lib/features/prayer/state/prayer_controller.dart`:
+  - `ensureUpcomingDaysCached({days = 8})` — fills the per-day cache for the next week via `fetchMonth`, only fetching months whose days are missing. Idempotent and best-effort (network failures don't surface).
+  - `timesForUpcomingDays({days = 7})` — synchronous read of cached times keyed by `DateTime`. Returns whatever is cached; the notification controller schedules only those days.
+  - `scheduleVersion` int — increments on cache load, override change, and successful range fetch. Used as the cheap-guard for re-scheduling.
+  - `setAddress` now kicks off `ensureUpcomingDaysCached()` after loading today's cache.
+- `lib/features/notifications/state/notification_controller.dart`:
+  - ID partitioning extended: `1000 + dayOffset*10 + slot.index*2` for at-time, `+1` for heads-up. 10 days × 5 slots × 2 = 100 IDs, fits in the existing 1000-1099 range.
+  - `applyContext` now takes `prayerTimesByDay` + `prayerVersion` instead of today-only `prayerTimes`. Guard switched from per-slot equality check to version compare.
+  - `_scheduleAllPrayers` iterates the multi-day map, skips past days and days >9 ahead (ID-space safety).
+  - `update` and `reschedule` accept `prayerTimesByDay`. `_lastPrayerByDay` is cached so settings changes can re-use the multi-day map without forcing the caller to pass it.
+- `lib/main.dart`:
+  - Proxy provider for `NotificationController` now passes `prayer.timesForUpcomingDays(days: 7)` and `prayer.scheduleVersion`.
+  - `_handleLogin` fires `notif.ensureInitialized()` once the session is ready — pulls permission prompts up to first launch instead of waiting for the first reschedule.
+- `lib/main_shell.dart`: `_MainShellState` adopts `WidgetsBindingObserver` and on `AppLifecycleState.resumed` calls `reschedule` + `ensureUpcomingDaysCached`. This re-arms alarms that aggressive OEMs may have cleared, and keeps the rolling 7-day window full.
+- `lib/features/settings/screens/settings_screen.dart`:
+  - Switched the two callsites that passed `prayerTimes:` to `prayerTimesByDay:` with `prayer.timesForUpcomingDays(days: 7)`.
+  - New `_OemAutostartGuidance` expandable section inside `_BatteryOptimizationCard` — brand-specific instructions for Xiaomi/MIUI, OPPO/Realme, Vivo, Huawei/Honor, Samsung. Includes an "Open app settings" button via `permission_handler`'s `openAppSettings()`. There's no API to grant OEM autostart programmatically; this is the closest we can get.
+
+**Caveats:**
+
+- The 10-day ID cap means schedules beyond a week from "now" are silently dropped. The 7-day default leaves headroom.
+- iOS has a 64 pending-notification limit. With prayer (70) + study (1) + streak (1) + water (≤6 default) ≈ 78 worst case. If users hit drop-out symptoms on iPhone, the prayer window should drop to 5 days (50 + ~8 = 58) — handled by changing the `days:` argument in `main.dart` / `main_shell.dart` / `settings_screen.dart`.
+- `flutter analyze` clean (8 pre-existing info lints, none new).
+
+### Follow-up: Friday → Jummah everywhere
+
+User wanted Friday Dhuhr relabeled to Jummah across the app, with notification copy and dashboard following suit. Jummah is the congregational Friday prayer prayed at the Dhuhr time slot — it replaces Dhuhr, not added alongside.
+
+**Changes:**
+
+- `lib/features/prayer/state/prayer_controller.dart`: new `labelOn(DateTime day)` extension on `PrayerSlot` — returns `'Jummah'` for `PrayerSlot.dhuhr` when `day.weekday == DateTime.friday`, otherwise delegates to `label`. Existing `label` getter unchanged so anything that needs the canonical English name still gets it.
+- `lib/features/prayer/service/aladhan_service.dart`: `_parse` now prefers AlAdhan's `Jumua` timing field on Fridays when present, falling back to `Dhuhr`. AlAdhan's default `method=1` (Karachi) doesn't return `Jumua` so this is mostly defensive — if a future calc method or different endpoint returns a dedicated Jummah time, we'll use it; otherwise the Dhuhr time is the canonical Jummah time anyway.
+- `lib/features/prayer/screens/prayer_screen.dart`: 3 callsites switched from `slot.label` → `slot.labelOn(DateTime.now())` — the slot tile title, the time-picker `helpText`, and the override-confirmation snack.
+- `lib/features/dashboard/screens/dashboard_screen.dart`: "Next prayer" card uses `nextSlot.labelOn(nextTime)`.
+- `lib/features/notifications/state/notification_controller.dart`: `_prayerCopy` takes a `DateTime day` and uses `slot.labelOn(day)`. `_scheduleAllPrayers` passes the scheduled `at` time so future Fridays in the 7-day window also render "Jummah" — important since we now schedule a week ahead.
+
+`flutter analyze` clean.
+
+---
+
+### Follow-up: prayer screen spinner stuck after cold start
+
+Immediately after the changes above shipped, the Prayer screen hung on its CircularProgressIndicator on a fresh install. Three places were racing on the AlAdhan API or interrupting the cold-start fetch:
+
+1. `PrayerController.setAddress` was firing `ensureUpcomingDaysCached()` on every app start (via the ProfileController proxy), launching a parallel `calendarByAddress` HTTP call alongside the prayer screen's own `fetchByAddress` → `timingsByAddress` call.
+2. `_Root._handleLogin` was eagerly firing `NotificationController.ensureInitialized()`, which on Android 12 calls `requestExactAlarmsPermission()` — this opens a full system settings page, backgrounds the app mid-fetch, and the in-flight HTTP can get stranded.
+3. `MainShell.didChangeAppLifecycleState(resumed)` was also calling `ensureUpcomingDaysCached()` on every resume, including the implicit resume that fires right after the system settings page closes — another fetch racing with whatever else was in flight.
+
+**Fix:** removed all three side-effects so the only HTTP fetch on cold start is the prayer screen's own `fetchByAddress`. The 7-day calendar warm-up now fires only from inside `fetchByAddress` itself, after an 800ms delay so today's UI repaint settles before any second HTTP request goes out. Permissions revert to the lazy path (requested inside the first `reschedule()`, which happens once prayer data lands).
+
+- `lib/features/prayer/state/prayer_controller.dart`: removed `unawaited(ensureUpcomingDaysCached())` from `setAddress`; wrapped the call in `fetchByAddress` with a 800ms `Future.delayed`.
+- `lib/main.dart`: removed the eager `ensureInitialized()` from `_handleLogin`; removed now-unused `dart:async` import.
+- `lib/main_shell.dart`: removed the `ensureUpcomingDaysCached()` call from the resume hook (kept the `reschedule` — that's idempotent and cheap).
+
+---
+
 ## 2026-05-17
 
 ### Gamification: global XP now sums all CharacterStats

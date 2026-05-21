@@ -213,7 +213,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   const Icon(Icons.access_time, color: AppColors.accent),
                   const SizedBox(width: 12),
-                  Text(nextSlot.label,
+                  Text(nextSlot.labelOn(nextTime),
                       style: const TextStyle(
                         color: AppColors.text,
                         fontSize: 17,

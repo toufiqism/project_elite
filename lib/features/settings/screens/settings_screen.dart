@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -26,7 +27,10 @@ class SettingsScreen extends StatelessWidget {
     final s = ctrl.settings;
 
     Future<void> apply(NotificationSettings next) async {
-      await ctrl.update(next, prayerTimes: prayer.times);
+      await ctrl.update(
+        next,
+        prayerTimesByDay: prayer.timesForUpcomingDays(days: 7),
+      );
     }
 
     return Scaffold(
@@ -137,7 +141,9 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed: () => ctrl.reschedule(prayerTimes: prayer.times),
+            onPressed: () => ctrl.reschedule(
+              prayerTimesByDay: prayer.timesForUpcomingDays(days: 7),
+            ),
             icon: const Icon(Icons.refresh),
             label: const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
@@ -785,6 +791,79 @@ class _BatteryOptimizationCardState extends State<_BatteryOptimizationCard>
               label: const Text('Allow background activity'),
             ),
           ],
+          const SizedBox(height: 16),
+          const _OemAutostartGuidance(),
+        ],
+      ),
+    );
+  }
+}
+
+// Many Android OEMs (Xiaomi/MIUI, OPPO/Realme, Vivo, Huawei) bypass the
+// standard battery-optimization API and silently kill scheduled alarms after
+// the user swipe-kills the app — even when the app is whitelisted above.
+// There's no API to grant the OEM-specific "Autostart" permission; the user
+// has to flip it manually. This widget surfaces the per-brand path.
+class _OemAutostartGuidance extends StatelessWidget {
+  const _OemAutostartGuidance();
+
+  static const _brands = <(String, String)>[
+    ('Xiaomi / Redmi / POCO (MIUI/HyperOS)',
+        'Settings → Apps → Project Elite → Autostart (ON), and Battery saver → No restrictions.'),
+    ('OPPO / Realme (ColorOS/RealmeUI)',
+        'Settings → Battery → App battery management → Project Elite → Allow background activity + Auto launch.'),
+    ('Vivo / iQOO (FuntouchOS/OriginOS)',
+        'Settings → Battery → Background power consumption manager → Project Elite → Allow.'),
+    ('Huawei / Honor (EMUI/MagicOS)',
+        'Settings → Apps → Project Elite → Battery → App launch → switch to Manage manually, enable all.'),
+    ('Samsung (One UI)',
+        'Settings → Apps → Project Elite → Battery → Unrestricted.'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(top: 8, bottom: 4),
+        title: const Text(
+          'Reminders still get killed?',
+          style: TextStyle(
+            color: AppColors.text,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+        subtitle: const Text(
+          'Some Android phones need an extra Autostart permission',
+          style: TextStyle(color: AppColors.muted, fontSize: 12),
+        ),
+        children: [
+          for (final b in _brands)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(b.$1,
+                      style: const TextStyle(
+                          color: AppColors.text,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12)),
+                  const SizedBox(height: 2),
+                  Text(b.$2,
+                      style: const TextStyle(
+                          color: AppColors.muted, fontSize: 12)),
+                ],
+              ),
+            ),
+          const SizedBox(height: 6),
+          OutlinedButton.icon(
+            onPressed: openAppSettings,
+            icon: const Icon(Icons.open_in_new, size: 16),
+            label: const Text('Open app settings'),
+          ),
         ],
       ),
     );

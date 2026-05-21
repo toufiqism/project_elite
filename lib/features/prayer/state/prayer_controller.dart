@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
@@ -21,6 +23,17 @@ extension PrayerSlotX on PrayerSlot {
       case PrayerSlot.isha:
         return 'Isha';
     }
+  }
+
+  /// Display label for this slot on a specific day. Returns "Jummah" for the
+  /// Dhuhr slot on Fridays — congregational Friday prayer replaces Dhuhr at
+  /// the same time slot. All UI surfaces (prayer screen, dashboard, notification
+  /// copy) should use this in place of [label] when a date is known.
+  String labelOn(DateTime day) {
+    if (this == PrayerSlot.dhuhr && day.weekday == DateTime.friday) {
+      return 'Jummah';
+    }
+    return label;
   }
 }
 
@@ -56,6 +69,11 @@ class PrayerController extends ChangeNotifier {
     _locationError = null;
     if (address != null && address.isNotEmpty) {
       _loadCached();
+      // Note: we deliberately do NOT fire `ensureUpcomingDaysCached()` here.
+      // setAddress runs on every cold start (via the ProfileController proxy),
+      // and an immediate parallel calendar fetch can compete with the screen's
+      // own `fetchByAddress` call. The 7-day cache is warmed later, from
+      // `fetchByAddress` once today's times have landed.
     } else {
       _times = null;
       notifyListeners();
@@ -73,13 +91,77 @@ class PrayerController extends ChangeNotifier {
       final fetched = await AladhanService.fetchTimings(address, today);
       await _box.put(_cacheKey(today), _toStorable(fetched));
       _times = _withOverrides(fetched, today);
+      _scheduleVersion += 1;
     } catch (e) {
       _locationError = e.toString();
     } finally {
       _loading = false;
       notifyListeners();
     }
+    // Best-effort: also warm a multi-day cache for the notification scheduler.
+    // Failures here don't block the UI. A short delay yields the event loop
+    // so today's UI repaint settles before we issue another HTTP call.
+    unawaited(Future.delayed(
+      const Duration(milliseconds: 800),
+      ensureUpcomingDaysCached,
+    ));
   }
+
+  /// Ensures the next [days] days of prayer times are present in the local
+  /// cache. Used by the notification controller to schedule a rolling window
+  /// without making N HTTP requests. Idempotent: only fetches months whose
+  /// days are missing from cache.
+  Future<void> ensureUpcomingDaysCached({int days = 8}) async {
+    final address = _address;
+    if (address == null || address.isEmpty) return;
+    final today = DateTime.now();
+    final neededMonths = <(int, int)>{};
+    for (var i = 0; i < days; i++) {
+      final d = today.add(Duration(days: i));
+      final missing = _box.get(_cacheKey(d)) == null;
+      if (missing) neededMonths.add((d.year, d.month));
+    }
+    if (neededMonths.isEmpty) return;
+    var changed = false;
+    for (final (y, m) in neededMonths) {
+      try {
+        final monthMap = await AladhanService.fetchMonth(address, y, m);
+        for (final entry in monthMap.entries) {
+          final day = DateTime(y, m, entry.key);
+          await _box.put(_cacheKey(day), _toStorable(entry.value));
+          changed = true;
+        }
+      } catch (_) {
+        // Network failure is OK; we'll retry next launch. Don't surface to UI.
+      }
+    }
+    if (changed) {
+      _scheduleVersion += 1;
+      notifyListeners();
+    }
+  }
+
+  /// Multi-day view of cached prayer times for the next [days] days (today
+  /// inclusive). Used by the notification scheduler. Days not yet cached are
+  /// omitted — caller should call [ensureUpcomingDaysCached] first to fill in.
+  Map<DateTime, Map<PrayerSlot, DateTime>> timesForUpcomingDays({int days = 7}) {
+    final result = <DateTime, Map<PrayerSlot, DateTime>>{};
+    final today = DateTime.now();
+    for (var i = 0; i < days; i++) {
+      final d = DateTime(today.year, today.month, today.day + i);
+      final raw = _box.get(_cacheKey(d));
+      if (raw is Map) {
+        final base = _fromStorable(Map<String, dynamic>.from(raw), d);
+        result[d] = _withOverrides(base, d);
+      }
+    }
+    return result;
+  }
+
+  /// Increments whenever cached times or overrides change. Cheap signal the
+  /// notification controller can compare to detect "do I need to reschedule?".
+  int _scheduleVersion = 0;
+  int get scheduleVersion => _scheduleVersion;
 
   // ── Manual overrides ────────────────────────────────────────────────────────
 
@@ -143,6 +225,7 @@ class PrayerController extends ChangeNotifier {
     if (raw is Map) {
       final base = _fromStorable(Map<String, dynamic>.from(raw), DateTime.now());
       _times = _withOverrides(base, DateTime.now());
+      _scheduleVersion += 1;
       notifyListeners();
     }
   }
@@ -152,6 +235,7 @@ class PrayerController extends ChangeNotifier {
     if (raw is Map) {
       final base = _fromStorable(Map<String, dynamic>.from(raw), DateTime.now());
       _times = _withOverrides(base, DateTime.now());
+      _scheduleVersion += 1;
       notifyListeners();
     }
   }

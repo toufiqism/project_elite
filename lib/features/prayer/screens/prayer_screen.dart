@@ -298,7 +298,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(slot.label,
+                  Text(slot.labelOn(DateTime.now()),
                       style: const TextStyle(
                         color: AppColors.text,
                         fontWeight: FontWeight.w700,
@@ -364,7 +364,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
     final picked = await showTimePicker(
       context: context,
       initialTime: initial,
-      helpText: 'Set ${slot.label} time',
+      helpText: 'Set ${slot.labelOn(DateTime.now())} time',
       builder: (ctx, child) => MediaQuery(
         data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
         child: child!,
@@ -391,7 +391,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
               ListTile(
                 leading:
                     const Icon(Icons.check_circle, color: AppColors.success),
-                title: Text('${slot.label} set to ${picked.format(context)}'),
+                title: Text(
+                    '${slot.labelOn(DateTime.now())} set to ${picked.format(context)}'),
                 subtitle: const Text('Tap "Reset" to revert to API time.',
                     style: TextStyle(color: AppColors.muted, fontSize: 12)),
               ),

@@ -88,10 +88,11 @@ class ProjectEliteApp extends StatelessWidget {
           create: (_) => NotificationController(),
           update: (_, prayer, ayano, notif) {
             final ctrl = notif ?? NotificationController();
-            // Cheaply guarded: only reschedules if prayer times or discipline-
-            // override changed. Fire-and-forget.
+            // Cheaply guarded by scheduleVersion: only reschedules when the
+            // prayer cache or discipline mode actually changed.
             ctrl.applyContext(
-              prayerTimes: prayer.times,
+              prayerTimesByDay: prayer.timesForUpcomingDays(days: 7),
+              prayerVersion: prayer.scheduleVersion,
               disciplineMode: ayano.disciplineMode,
             );
             return ctrl;

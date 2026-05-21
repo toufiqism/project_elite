@@ -9,14 +9,17 @@ import '../service/notification_service.dart';
 /// IDs are partitioned by category so reschedules can cancel/replace without
 /// stomping on other categories.
 ///
-/// 1000-1099: prayer (heads-up + at-time per slot)
+/// 1000-1099: prayer — 1000 + dayOffset*10 + slot.index*2 (at-time), +1 (heads-up).
+///            Supports up to 10 days × 5 slots × 2 notifications.
 /// 2000-2009: study daily
 /// 3000-3099: water (one per slot in the day)
 /// 4000-4009: streak end-of-day
 /// 9000-9099: test
 class _NotifIds {
-  static int prayerAt(PrayerSlot s) => 1000 + s.index * 2;
-  static int prayerHeadsUp(PrayerSlot s) => 1001 + s.index * 2;
+  static int prayerAt(int dayOffset, PrayerSlot s) =>
+      1000 + dayOffset * 10 + s.index * 2;
+  static int prayerHeadsUp(int dayOffset, PrayerSlot s) =>
+      1001 + dayOffset * 10 + s.index * 2;
   static const int studyDaily = 2000;
   static int waterSlot(int i) => 3000 + i;
   static const int streakEod = 4000;
@@ -36,33 +39,28 @@ class NotificationController extends ChangeNotifier {
   /// When true, all scheduled notifications use the Discipline tone regardless
   /// of the user-chosen `_settings.tone`. Toggled by Ayanokoji discipline mode.
   bool _disciplineOverride = false;
-  Map<PrayerSlot, DateTime>? _lastPrayerTimes;
+  int _lastPrayerVersion = -1;
+  Map<DateTime, Map<PrayerSlot, DateTime>>? _lastPrayerByDay;
 
   NotificationTone get _effectiveTone =>
       _disciplineOverride ? NotificationTone.discipline : _settings.tone;
 
   /// Called from the provider proxy with the current discipline-mode state.
-  /// Cheaply guarded: only reschedules when something actually changed.
+  /// Cheaply guarded by [prayerVersion] so we only do work when prayer cache
+  /// or discipline mode actually changed.
   Future<void> applyContext({
-    Map<PrayerSlot, DateTime>? prayerTimes,
+    required Map<DateTime, Map<PrayerSlot, DateTime>> prayerTimesByDay,
+    required int prayerVersion,
     required bool disciplineMode,
   }) async {
     final overrideChanged = _disciplineOverride != disciplineMode;
-    final timesChanged = !_samePrayerTimes(_lastPrayerTimes, prayerTimes);
+    final versionChanged = _lastPrayerVersion != prayerVersion;
     _disciplineOverride = disciplineMode;
-    _lastPrayerTimes = prayerTimes;
-    if (overrideChanged || timesChanged) {
-      await reschedule(prayerTimes: prayerTimes);
+    _lastPrayerVersion = prayerVersion;
+    _lastPrayerByDay = prayerTimesByDay;
+    if (overrideChanged || versionChanged) {
+      await reschedule(prayerTimesByDay: prayerTimesByDay);
     }
-  }
-
-  bool _samePrayerTimes(
-    Map<PrayerSlot, DateTime>? a,
-    Map<PrayerSlot, DateTime>? b,
-  ) {
-    if (a == null && b == null) return true;
-    if (a == null || b == null) return false;
-    return PrayerSlot.values.every((s) => a[s] == b[s]);
   }
 
   NotificationController() {
@@ -89,22 +87,31 @@ class NotificationController extends ChangeNotifier {
   Future<void> update(
     NotificationSettings next, {
     Map<PrayerSlot, DateTime>? prayerTimes,
+    Map<DateTime, Map<PrayerSlot, DateTime>>? prayerTimesByDay,
   }) async {
     _settings = next;
     await _box.put(_key, next.toJson());
     notifyListeners();
-    await reschedule(prayerTimes: prayerTimes);
+    final multiDay = prayerTimesByDay ??
+        _lastPrayerByDay ??
+        (prayerTimes != null
+            ? {DateTime.now(): prayerTimes}
+            : <DateTime, Map<PrayerSlot, DateTime>>{});
+    await reschedule(prayerTimesByDay: multiDay);
   }
 
-  Future<void> reschedule({Map<PrayerSlot, DateTime>? prayerTimes}) async {
+  Future<void> reschedule({
+    Map<DateTime, Map<PrayerSlot, DateTime>>? prayerTimesByDay,
+  }) async {
     if (!_initialized) await ensureInitialized();
     await _svc.cancelAll();
 
     final s = _settings;
     final tone = _effectiveTone;
+    final byDay = prayerTimesByDay ?? _lastPrayerByDay ?? const {};
 
-    if (s.prayerOn && prayerTimes != null) {
-      await _scheduleAllPrayers(prayerTimes, tone);
+    if (s.prayerOn && byDay.isNotEmpty) {
+      await _scheduleAllPrayers(byDay, tone);
     }
     if (s.studyOn) {
       await _svc.scheduleDaily(
@@ -134,34 +141,44 @@ class NotificationController extends ChangeNotifier {
   }
 
   Future<void> _scheduleAllPrayers(
-    Map<PrayerSlot, DateTime> times,
+    Map<DateTime, Map<PrayerSlot, DateTime>> byDay,
     NotificationTone tone,
   ) async {
-    final pairs = PrayerSlot.values
-        .map((s) => (s, times[s]))
-        .where((p) => p.$2 != null)
-        .map((p) => (p.$1, p.$2!));
-    for (final (slot, at) in pairs) {
-      final headsUp = at.subtract(const Duration(minutes: 10));
-      final atCopy = _prayerCopy(slot, tone, atTime: true);
-      final huCopy = _prayerCopy(slot, tone, atTime: false);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final sortedDays = byDay.keys.toList()..sort();
+    for (final day in sortedDays) {
+      final normalized = DateTime(day.year, day.month, day.day);
+      final dayOffset = normalized.difference(today).inDays;
+      // Days that have already passed take ID space we can't safely reuse.
+      // Days more than 9 ahead overflow our 10-slot-per-day partition.
+      if (dayOffset < 0 || dayOffset > 9) continue;
+      final times = byDay[day];
+      if (times == null) continue;
+      for (final slot in PrayerSlot.values) {
+        final at = times[slot];
+        if (at == null) continue;
+        final headsUp = at.subtract(const Duration(minutes: 10));
+        final atCopy = _prayerCopy(slot, at, tone, atTime: true);
+        final huCopy = _prayerCopy(slot, at, tone, atTime: false);
 
-      await _svc.scheduleAt(
-        id: _NotifIds.prayerHeadsUp(slot),
-        channel: NotificationChannels.prayer,
-        when: headsUp,
-        title: huCopy.title,
-        body: huCopy.body,
-        tone: tone,
-      );
-      await _svc.scheduleAt(
-        id: _NotifIds.prayerAt(slot),
-        channel: NotificationChannels.prayer,
-        when: at,
-        title: atCopy.title,
-        body: atCopy.body,
-        tone: tone,
-      );
+        await _svc.scheduleAt(
+          id: _NotifIds.prayerHeadsUp(dayOffset, slot),
+          channel: NotificationChannels.prayer,
+          when: headsUp,
+          title: huCopy.title,
+          body: huCopy.body,
+          tone: tone,
+        );
+        await _svc.scheduleAt(
+          id: _NotifIds.prayerAt(dayOffset, slot),
+          channel: NotificationChannels.prayer,
+          when: at,
+          title: atCopy.title,
+          body: atCopy.body,
+          tone: tone,
+        );
+      }
     }
   }
 
@@ -276,8 +293,13 @@ _Copy _copy(NotificationTone tone, _Pack p) {
   }
 }
 
-_Copy _prayerCopy(PrayerSlot slot, NotificationTone tone, {required bool atTime}) {
-  final name = slot.label;
+_Copy _prayerCopy(
+  PrayerSlot slot,
+  DateTime day,
+  NotificationTone tone, {
+  required bool atTime,
+}) {
+  final name = slot.labelOn(day);
   switch (tone) {
     case NotificationTone.silent:
       return atTime

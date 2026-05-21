@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'features/dashboard/screens/dashboard_screen.dart';
 import 'features/fitness/screens/fitness_home_screen.dart';
 import 'features/habits/screens/habits_screen.dart';
 import 'features/news/screens/news_screen.dart';
+import 'features/notifications/state/notification_controller.dart';
 import 'features/prayer/screens/prayer_screen.dart';
+import 'features/prayer/state/prayer_controller.dart';
 import 'features/study/screens/study_home_screen.dart';
 
 class MainShell extends StatefulWidget {
@@ -14,7 +17,7 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   int _index = 0;
 
   late final List<Widget> _pages = [
@@ -25,6 +28,34 @@ class _MainShellState extends State<MainShell> {
     const FitnessHomeScreen(),
     const NewsScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Re-arm scheduled notifications whenever the app comes back to the
+  // foreground. Aggressive OEMs (MIUI/OPPO/Vivo) can drop AlarmManager entries
+  // after swipe-kill, and our 7-day prayer window naturally shifts every day —
+  // so a resume is a good cue to refill any missing schedules. We deliberately
+  // skip the multi-day cache top-up here; that fetch happens lazily inside
+  // `PrayerController.fetchByAddress` after today's times land, so it can't
+  // race with the prayer screen's own fetch on cold start.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      final prayer = context.read<PrayerController>();
+      final notif = context.read<NotificationController>();
+      notif.reschedule(prayerTimesByDay: prayer.timesForUpcomingDays(days: 7));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
