@@ -223,6 +223,12 @@ class NotificationController extends ChangeNotifier {
     }
   }
 
+  Future<int> pendingCount() async {
+    if (!_initialized) await ensureInitialized();
+    final list = await _svc.pending();
+    return list.length;
+  }
+
   Future<void> fireTest() async {
     if (!_initialized) await ensureInitialized();
     await _svc.showNow(

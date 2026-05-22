@@ -6,6 +6,25 @@ Running log of changes made by Claude across sessions. Newest entries at top.
 
 ## 2026-05-22
 
+### Follow-up: notification reliability fixes for OPPO/Vivo + pending-count diagnostic
+
+User reported receiving zero notifications (all four types) on an OPPO/ColorOS device despite battery optimization being disabled. Root causes found:
+
+**Bug 1 — `ScheduledNotificationBootReceiver` was `exported="false"`** (Android manifest). Android 12+ cannot deliver system broadcasts (`BOOT_COMPLETED`, `MY_PACKAGE_REPLACED`, `QUICKBOOT_POWERON`) to unexported receivers — they're dropped silently. This meant after every device restart, the app's boot receiver never fired and all previously queued alarms were permanently lost until the app was manually reopened. Fixed: `android:exported="true"` on that receiver.
+
+**Bug 2 — OPPO Autostart guidance was incomplete.** The OEM guidance only listed the battery management path (`Settings → Battery → App battery management`). On ColorOS/RealmeUI the critical step is actually in **Phone Manager → Startup Management** — an entirely separate permission ("Autostart" / "Self-start") that controls whether the OS can wake the app to deliver alarms. Without this, even exact alarms with battery-opt whitelisted are cleared when the app is swipe-killed. Updated guidance for OPPO and Vivo to show both steps. Xiaomi path also updated to `Manage apps → Autostart`.
+
+**Addition — pending notification count diagnostic.** Added `NotificationController.pendingCount()` and a new `_PendingNotifCard` widget in the Reliability section of Settings. Users can tap "Check" to see exactly how many notifications the OS has queued for this app. Count of 0 after pressing "Reschedule all" confirms an OS-level kill problem (autostart/foreground needed); count > 0 confirms scheduling works and the OEM is respecting it.
+
+**Changes:**
+- `android/app/src/main/AndroidManifest.xml`: `ScheduledNotificationBootReceiver` changed to `exported="true"`.
+- `lib/features/notifications/state/notification_controller.dart`: `pendingCount()` async method returns the OS-reported pending count.
+- `lib/features/settings/screens/settings_screen.dart`: OPPO and Vivo guidance rewritten with both required steps; Xiaomi path tightened; new `_PendingNotifCard` widget added after the battery card.
+
+`flutter analyze` clean (8 pre-existing info lints).
+
+---
+
 ### Notifications: multi-day prayer window + resume-rearming
 
 User reported notifications becoming infrequent after swipe-killing the app, across stock Android, MIUI/OPPO/Vivo, and iOS. Two distinct problems were stacked.

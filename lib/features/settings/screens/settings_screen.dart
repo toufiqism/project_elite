@@ -153,6 +153,8 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 24),
           const SectionHeader(title: 'Reliability'),
           const _BatteryOptimizationCard(),
+          const SizedBox(height: 12),
+          const _PendingNotifCard(),
           const SizedBox(height: 32),
           const SectionHeader(title: 'Cloud Sync'),
           const SizedBox(height: 8),
@@ -799,6 +801,80 @@ class _BatteryOptimizationCardState extends State<_BatteryOptimizationCard>
   }
 }
 
+// ── Pending notification diagnostic ──────────────────────────────────────────
+
+class _PendingNotifCard extends StatefulWidget {
+  const _PendingNotifCard();
+
+  @override
+  State<_PendingNotifCard> createState() => _PendingNotifCardState();
+}
+
+class _PendingNotifCardState extends State<_PendingNotifCard> {
+  int? _count;
+  bool _loading = false;
+
+  Future<void> _check() async {
+    setState(() => _loading = true);
+    final n = await context.read<NotificationController>().pendingCount();
+    if (mounted) setState(() { _count = n; _loading = false; });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return EliteCard(
+      child: Row(
+        children: [
+          Icon(
+            _count == null
+                ? Icons.help_outline
+                : _count! > 0
+                    ? Icons.check_circle
+                    : Icons.warning_amber_rounded,
+            size: 20,
+            color: _count == null
+                ? AppColors.muted
+                : _count! > 0
+                    ? AppColors.success
+                    : AppColors.warning,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Scheduled notifications',
+                    style: TextStyle(
+                        color: AppColors.text, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 2),
+                Text(
+                  _count == null
+                      ? 'Tap "Check" to see how many are queued'
+                      : _count! > 0
+                          ? '$_count notification${_count! == 1 ? '' : 's'} are queued by the OS'
+                          : 'None queued — tap "Reschedule" above, then check again',
+                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          TextButton(
+            onPressed: _loading ? null : _check,
+            child: _loading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: AppColors.primary))
+                : const Text('Check'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // Many Android OEMs (Xiaomi/MIUI, OPPO/Realme, Vivo, Huawei) bypass the
 // standard battery-optimization API and silently kill scheduled alarms after
 // the user swipe-kills the app — even when the app is whitelisted above.
@@ -809,13 +885,17 @@ class _OemAutostartGuidance extends StatelessWidget {
 
   static const _brands = <(String, String)>[
     ('Xiaomi / Redmi / POCO (MIUI/HyperOS)',
-        'Settings → Apps → Project Elite → Autostart (ON), and Battery saver → No restrictions.'),
+        'Settings → Apps → Manage apps → Project Elite → Autostart (ON). Also Battery saver → No restrictions.'),
     ('OPPO / Realme (ColorOS/RealmeUI)',
-        'Settings → Battery → App battery management → Project Elite → Allow background activity + Auto launch.'),
+        'Two steps required:\n'
+            '1. Phone Manager → Startup Management (or Privacy/Permissions → Startup) → Project Elite → ON\n'
+            '2. Settings → Battery → App battery management → Project Elite → Allow background activity + Auto launch'),
     ('Vivo / iQOO (FuntouchOS/OriginOS)',
-        'Settings → Battery → Background power consumption manager → Project Elite → Allow.'),
+        'Two steps required:\n'
+            '1. i Manager → App Management → Manage Auto-Start → Project Elite → ON\n'
+            '2. Settings → Battery → Background power consumption manager → Project Elite → Allow'),
     ('Huawei / Honor (EMUI/MagicOS)',
-        'Settings → Apps → Project Elite → Battery → App launch → switch to Manage manually, enable all.'),
+        'Settings → Apps → Project Elite → Battery → App launch → switch to Manage manually → enable all three toggles.'),
     ('Samsung (One UI)',
         'Settings → Apps → Project Elite → Battery → Unrestricted.'),
   ];
