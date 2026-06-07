@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 
@@ -27,8 +32,19 @@ import 'firebase_options.dart';
 import 'main_shell.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // ignore: avoid_print
+  print('ELITE_BOOT: main start');
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  // ignore: avoid_print
+  print('ELITE_BOOT: binding ready');
+  // Hold the native splash explicitly. On Android 12+ the auto-dismiss is
+  // unreliable in AOT release builds (Realme/Android 15 stuck on splash
+  // permanently). Manual remove after the first Flutter frame guarantees
+  // the splash drawable goes away.
+  FlutterNativeSplash.preserve(widgetsBinding: binding);
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  // ignore: avoid_print
+  print('ELITE_BOOT: edgeToEdge set');
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
@@ -37,14 +53,42 @@ Future<void> main() async {
     systemNavigationBarContrastEnforced: false,
   ));
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // ignore: avoid_print
+  print('ELITE_BOOT: firebase ready');
+
+  // Crashlytics: collect only in release. Debug builds report into the local
+  // console instead so dev errors don't pollute the prod dashboard. The
+  // setCollectionEnabled call is fire-and-forget — awaiting it on first
+  // launch can block runApp behind a network sync (saw a permanent splash
+  // hang on Realme/Android 15 when this was awaited).
+  unawaited(FirebaseCrashlytics.instance
+      .setCrashlyticsCollectionEnabled(kReleaseMode));
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
+
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
   await HiveSetup.init();
+  // ignore: avoid_print
+  print('ELITE_BOOT: hive ready');
   await NotificationService.instance.init();
+  // ignore: avoid_print
+  print('ELITE_BOOT: notifications ready');
   await DuaService.instance.load();
+  // ignore: avoid_print
+  print('ELITE_BOOT: duas ready, calling runApp');
   runApp(const ProjectEliteApp());
+  // ignore: avoid_print
+  print('ELITE_BOOT: runApp returned');
+  // Remove splash after the first frame paints so users see the real UI,
+  // not a stuck system splash drawable.
+  WidgetsBinding.instance.addPostFrameCallback(
+      (_) => FlutterNativeSplash.remove());
 }
 
 class ProjectEliteApp extends StatelessWidget {

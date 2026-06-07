@@ -98,6 +98,24 @@ class SyncService {
     }
   }
 
+  /// Deletes the entire `users/{uid}` document tree from Firestore.
+  /// Called from the in-app account-deletion flow (Play Store requirement).
+  static Future<void> deleteRemoteData(String uid) async {
+    final batch = _db.batch();
+    batch.delete(_meta(uid));
+    for (final name in _syncedBoxes) {
+      batch.delete(_boxRef(uid, name));
+    }
+    batch.delete(_db.collection('users').doc(uid));
+    await batch.commit().timeout(
+          _kTimeout,
+          onTimeout: () => throw Exception(
+            'Could not reach Firestore to delete your data. '
+            'Check your connection and try again.',
+          ),
+        );
+  }
+
   static Map<String, dynamic> _serializeBox(Box box) {
     final out = <String, dynamic>{};
     for (final key in box.keys) {

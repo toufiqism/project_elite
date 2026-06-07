@@ -83,6 +83,31 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  /// Deletes the Firebase Auth user. Caller is responsible for wiping
+  /// Firestore data and local Hive boxes BEFORE invoking this.
+  ///
+  /// Returns null on success, or an error message. If Firebase rejects with
+  /// `requires-recent-login`, the user must sign in again, then retry.
+  Future<String?> deleteAccount() async {
+    final u = _auth.currentUser;
+    if (u == null) return 'Not signed in.';
+    try {
+      await u.delete();
+      try {
+        await GoogleSignIn().signOut();
+      } catch (_) {}
+      return null;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        return 'For your security, please sign out and sign back in, '
+            'then try deleting again.';
+      }
+      return _message(e.code);
+    } catch (_) {
+      return 'Could not delete your account. Please try again.';
+    }
+  }
+
   Future<void> signOut() async {
     // Google sign-out is best-effort — it may throw if this session used
     // email/password (no active Google session). Never let it block Firebase.

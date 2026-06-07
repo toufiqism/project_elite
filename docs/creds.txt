@@ -1,0 +1,5 @@
+  Upload key fingerprints (Play Console will ask for these):
+  - SHA1: 34:C3:2E:DA:26:B8:12:03:1F:E0:05:47:E8:3A:0C:59:81:4D:D3:7F
+  - SHA256: 28:AF:A6:CA:6A:9D:6A:1F:50:F3:F6:ED:46:36:2A:27:22:19:AF:14:AD:93:B7:23:16:94:12:A0:7C:A8:E9:D4
+
+

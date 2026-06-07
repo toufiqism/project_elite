@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/storage/hive_setup.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/elite_card.dart';
 import '../../auth/state/auth_controller.dart';
@@ -174,9 +176,150 @@ class SettingsScreen extends StatelessWidget {
               side: const BorderSide(color: AppColors.danger),
             ),
           ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => _confirmDeleteAccount(context),
+            icon: const Icon(Icons.delete_forever, color: AppColors.danger),
+            label: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text('Delete account',
+                  style: TextStyle(color: AppColors.danger)),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.danger),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Permanently erases your cloud backup, account, and all on-device data. '
+            'This cannot be undone.',
+            style: TextStyle(color: AppColors.muted, fontSize: 12),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final auth = context.read<AuthController>();
+    final uid = auth.user?.uid;
+    if (uid == null) return;
+
+    // First confirm
+    final first = await showDialog<bool>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Delete your account?'),
+        content: const Text(
+          'This will permanently delete:\n'
+          '  • Your cloud backup\n'
+          '  • Your sign-in credentials\n'
+          '  • All data on this device\n\n'
+          'You will not be able to recover any of it.',
+          style: TextStyle(color: AppColors.muted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+    if (first != true || !context.mounted) return;
+
+    // Second confirm — type DELETE to proceed
+    final typed = TextEditingController();
+    final second = await showDialog<bool>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Type DELETE to confirm'),
+        content: TextField(
+          controller: typed,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'DELETE'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dctx, typed.text.trim() == 'DELETE'),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            child: const Text('Delete forever'),
+          ),
+        ],
+      ),
+    );
+    if (second != true || !context.mounted) return;
+
+    // Show progress
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    String? err;
+    try {
+      // 1) Wipe Firestore data first — if this fails the account is preserved
+      //    so the user can retry without orphaned cloud data.
+      await SyncService.deleteRemoteData(uid);
+
+      // 2) Clear all user-scoped local Hive boxes.
+      const userBoxes = [
+        HiveBoxes.profile,
+        HiveBoxes.study,
+        HiveBoxes.habits,
+        HiveBoxes.habitLogs,
+        HiveBoxes.prayer,
+        HiveBoxes.workoutSessions,
+        HiveBoxes.weightLog,
+        HiveBoxes.focusSessions,
+        HiveBoxes.socialRatings,
+        HiveBoxes.gameResults,
+        HiveBoxes.tasbih,
+      ];
+      for (final name in userBoxes) {
+        await Hive.box(name).clear();
+      }
+      // Forget last_uid so the next sign-in is treated as a fresh login.
+      await Hive.box(HiveBoxes.settings).delete('last_uid');
+
+      // 3) Delete the Firebase Auth user. Triggers authStateChanges ->
+      //    _Root flips back to AuthScreen automatically.
+      err = await auth.deleteAccount();
+    } catch (e) {
+      err = 'Could not delete: $e';
+    }
+
+    if (!context.mounted) return;
+    Navigator.of(context, rootNavigator: true).pop(); // close progress
+
+    if (err != null) {
+      await showDialog(
+        context: context,
+        builder: (dctx) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text('Account deletion incomplete'),
+          content: Text(err!, style: const TextStyle(color: AppColors.muted)),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(dctx),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Future<void> _confirmSignOut(BuildContext context) async {

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -33,7 +34,9 @@ class NotificationService {
       // Fall back to UTC if the platform call fails. Schedules still work.
     }
 
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // Status-bar icon MUST be a white-on-transparent silhouette per Android
+    // guidelines; colored mipmap icons get rendered as a solid white square.
+    const android = AndroidInitializationSettings('@drawable/ic_stat_notification');
     const ios = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -118,6 +121,8 @@ class NotificationService {
       playSound: playSound,
       enableVibration: enableVibration,
       category: AndroidNotificationCategory.reminder,
+      icon: 'ic_stat_notification',
+      color: const Color(0xFFE7C77B),
     );
     final iosDetails = DarwinNotificationDetails(
       presentAlert: true,

@@ -1,0 +1,13 @@
+# Template for android/key.properties — copy to `key.properties` (gitignored)
+# and fill with values from your `keytool -genkey` run.
+#
+# Generate keystore (once):
+#   keytool -genkey -v -keystore android/upload-keystore.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# Then copy this file to key.properties and replace each placeholder.
+
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=upload
+storeFile=upload-keystore.jks

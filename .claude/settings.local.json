@@ -15,7 +15,24 @@
       "Bash(curl -s \"https://api.aladhan.com/v1/timingsByAddress/22-05-2026?address=Dhaka&method=1\" -o /tmp/aladhan_friday.json -w \"HTTP %{http_code}\\\\n\")",
       "Bash(node -e \"const d = require\\('/tmp/aladhan_friday.json'\\); console.log\\('weekday:', d.data.date.gregorian.weekday\\); console.log\\('timings keys:', Object.keys\\(d.data.timings\\)\\); console.log\\('Dhuhr:', d.data.timings.Dhuhr\\); console.log\\('Jumua:', d.data.timings.Jumua || d.data.timings.Juma || d.data.timings.Jummah || '\\(none\\)'\\);\")",
       "Bash(curl -s \"https://api.aladhan.com/v1/timingsByAddress/22-05-2026?address=Dhaka&method=1\")",
-      "Bash(node -e \"const d = require\\('C:/Users/Toufiq/aladhan_friday.json'\\); console.log\\('weekday:', d.data.date.gregorian.weekday\\); console.log\\('timings keys:', Object.keys\\(d.data.timings\\)\\); console.log\\('Dhuhr:', d.data.timings.Dhuhr\\); console.log\\('Jumua:', d.data.timings.Jumua || d.data.timings.Juma || d.data.timings.Jummah || '\\(none\\)'\\);\")"
+      "Bash(node -e \"const d = require\\('C:/Users/Toufiq/aladhan_friday.json'\\); console.log\\('weekday:', d.data.date.gregorian.weekday\\); console.log\\('timings keys:', Object.keys\\(d.data.timings\\)\\); console.log\\('Dhuhr:', d.data.timings.Dhuhr\\); console.log\\('Jumua:', d.data.timings.Jumua || d.data.timings.Juma || d.data.timings.Jummah || '\\(none\\)'\\);\")",
+      "Bash(where magick *)",
+      "Bash(where convert *)",
+      "Bash(where inkscape *)",
+      "Bash(python --version)",
+      "Bash(python *)",
+      "Bash(dart run *)",
+      "Bash(./gradlew :app:tasks --quiet)",
+      "Bash(\"/c/Program Files/Java/jdk-17/bin/keytool.exe\" -genkey -v -keystore android/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload -storepass 'qI95Bn7wpKsGDUlIzzsplfwF0lzy0Ggg' -keypass 'qI95Bn7wpKsGDUlIzzsplfwF0lzy0Ggg' -dname \"CN=Toufiq Akbar, OU=Project Elite, O=Toufiq Akbar, L=Karachi, ST=Sindh, C=PK\")",
+      "Bash(git check-ignore *)",
+      "Bash(flutter build *)",
+      "Bash(\"/c/Program Files/Java/jdk-17/bin/keytool.exe\" -list -v -keystore D:/Projects/project_elite/android/upload-keystore.jks -storepass 'qI95Bn7wpKsGDUlIzzsplfwF0lzy0Ggg')",
+      "Skill(run)",
+      "Bash(flutter devices *)",
+      "Bash(flutter install *)",
+      "Bash(adb *)",
+      "Bash(grep -E \"\\\\.so$|isolate_snapshot|kernel_blob\")",
+      "Bash(flutter run *)"
     ]
   }
 }

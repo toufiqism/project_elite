@@ -9,12 +9,14 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <application
         android:label="Project Elite"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="false"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -42,6 +44,14 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Disable Impeller/Vulkan rendering. The Mali GPU driver on some
+             Realme/Oppo devices rejects R8 + RGBA_10101010 texture formats,
+             causing Flutter to start but never render a frame (app stuck on
+             splash forever). Falls back to Skia/OpenGL which works on every
+             supported device. Revisit when Flutter's Impeller hardens. -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
 
         <!-- flutter_local_notifications: receivers required for scheduled + boot-restored alarms -->
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
