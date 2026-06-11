@@ -117,7 +117,7 @@ For deeper guidance see `CLAUDE.md`.
 
 ## Release notes
 
-- **Version** — `1.0.0+10` (semver + Android versionCode). Bump `+N` every Play upload; bump `x.y.z` on user-facing releases.
+- **Version** — `1.1.0+11` (semver + Android versionCode). Bump `+N` every Play upload; bump `x.y.z` on user-facing releases.
 - **R8 / resource shrinking disabled** — `isMinifyEnabled` and `isShrinkResources` are off; shrinking previously broke notifications twice (notification icon stripped, Gson `TypeToken` removed).
 - **Notifications init** — `flutter_local_notifications.initialize()` is deferred to a post-frame callback (not awaited before `runApp`) to avoid a release splash hang on some Android 15 devices.
 
