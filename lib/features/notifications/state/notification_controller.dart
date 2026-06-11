@@ -16,6 +16,7 @@ import '../service/notification_service.dart';
 /// 2000-2009: study daily
 /// 3000-3099: water (one per slot in the day)
 /// 4000-4009: streak end-of-day
+/// 5000-5099: walk (one per slot in the day)
 /// 9000-9099: test
 class _NotifIds {
   static int prayerAt(int dayOffset, PrayerSlot s) =>
@@ -25,6 +26,7 @@ class _NotifIds {
   static const int studyDaily = 2000;
   static int waterSlot(int i) => 3000 + i;
   static const int streakEod = 4000;
+  static int walkSlot(int i) => 5000 + i;
   static const int test = 9000;
 }
 
@@ -125,7 +127,7 @@ class NotificationController extends ChangeNotifier {
     // This is the right moment: user has just enabled a reminder, so the
     // Settings page bounce is expected, not jarring at boot.
     final wantsSchedule = (s.prayerOn && byDay.isNotEmpty) ||
-        s.studyOn || s.waterOn || s.streakOn;
+        s.studyOn || s.waterOn || s.walkOn || s.streakOn;
     if (wantsSchedule) {
       unawaited(_ensureExactAlarmsPermission());
     }
@@ -148,6 +150,9 @@ class NotificationController extends ChangeNotifier {
     }
     if (s.waterOn) {
       await _scheduleWater(s, tone);
+    }
+    if (s.walkOn) {
+      await _scheduleWalk(s, tone);
     }
     if (s.streakOn) {
       await _svc.scheduleDaily(
@@ -245,6 +250,46 @@ class NotificationController extends ChangeNotifier {
     }
   }
 
+  Future<void> _scheduleWalk(
+    NotificationSettings s,
+    NotificationTone tone,
+  ) async {
+    final start = s.walkStartHour;
+    final end = s.walkEndHour;
+    if (end <= start) return;
+    final step = Duration(seconds: s.walkEverySeconds);
+    final firstSlot = DateTime.now().copyWith(
+      hour: start,
+      minute: 0,
+      second: 0,
+      millisecond: 0,
+      microsecond: 0,
+    );
+    final endSlot = DateTime.now().copyWith(
+      hour: end,
+      minute: 0,
+      second: 0,
+      millisecond: 0,
+      microsecond: 0,
+    );
+
+    var i = 0;
+    var when = firstSlot;
+    while (!when.isAfter(endSlot) && i < 100) {
+      await _svc.scheduleDaily(
+        id: _NotifIds.walkSlot(i),
+        channel: NotificationChannels.walk,
+        hour: when.hour,
+        minute: when.minute,
+        title: _copy(tone, _Pack.walk).title,
+        body: _copy(tone, _Pack.walk).body,
+        tone: tone,
+      );
+      i += 1;
+      when = when.add(step);
+    }
+  }
+
   Future<int> pendingCount() async {
     if (!_initialized) await ensureInitialized();
     final list = await _svc.pending();
@@ -263,7 +308,7 @@ class NotificationController extends ChangeNotifier {
   }
 }
 
-enum _Pack { study, water, streak, test }
+enum _Pack { study, water, walk, streak, test }
 
 class _Copy {
   final String title;
@@ -279,6 +324,8 @@ _Copy _copy(NotificationTone tone, _Pack p) {
           return const _Copy('Study reminder', 'Time set aside for study.');
         case _Pack.water:
           return const _Copy('Water', 'A small reminder to drink water.');
+        case _Pack.walk:
+          return const _Copy('Walk', 'A short walk adds to your step count.');
         case _Pack.streak:
           return const _Copy(
             'End of day',
@@ -296,6 +343,11 @@ _Copy _copy(NotificationTone tone, _Pack p) {
           );
         case _Pack.water:
           return const _Copy('Hydrate', 'Drink a glass of water. You\'ve got this.');
+        case _Pack.walk:
+          return const _Copy(
+            'Time to move',
+            'Get some steps in. A short walk now keeps your goal in reach.',
+          );
         case _Pack.streak:
           return const _Copy(
             'Don\'t break your streak',
@@ -310,6 +362,8 @@ _Copy _copy(NotificationTone tone, _Pack p) {
           return const _Copy('Open the book.', 'No excuses. Start the timer.');
         case _Pack.water:
           return const _Copy('Drink. Now.', 'Discipline starts in the body.');
+        case _Pack.walk:
+          return const _Copy('Move. Now.', 'Stand up and walk. Hit your steps.');
         case _Pack.streak:
           return const _Copy(
             'Finish the day.',

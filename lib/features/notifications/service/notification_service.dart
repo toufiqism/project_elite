@@ -11,10 +11,11 @@ class NotificationChannels {
   static const prayer = ('elite_prayer', 'Prayer reminders');
   static const study = ('elite_study', 'Study reminders');
   static const water = ('elite_water', 'Water reminders');
+  static const walk = ('elite_walk', 'Walk reminders');
   static const streak = ('elite_streak', 'Streak reminders');
   static const test = ('elite_test', 'Test notifications');
 
-  static const all = [prayer, study, water, streak, test];
+  static const all = [prayer, study, water, walk, streak, test];
 }
 
 class NotificationService {
