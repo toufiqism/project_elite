@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -84,16 +84,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Text(
               _greeting(),
-              style: const TextStyle(
-                color: AppColors.muted,
+              style: TextStyle(
+                color: context.colors.muted,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
             ),
             Text(
               p?.name ?? 'Elite',
-              style: const TextStyle(
-                color: AppColors.text,
+              style: TextStyle(
+                color: context.colors.text,
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
               ),
@@ -112,16 +112,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: ayano.disciplineMode
-                    ? AppColors.accent
-                    : AppColors.surfaceAlt,
+                    ? context.colors.accent
+                    : context.colors.surfaceAlt,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 ayano.disciplineMode ? 'AYANOKOJI' : 'NORMAL',
                 style: TextStyle(
                   color: ayano.disciplineMode
-                      ? AppColors.background
-                      : AppColors.muted,
+                      ? context.colors.background
+                      : context.colors.muted,
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.5,
@@ -137,11 +137,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               child: CircleAvatar(
                 radius: 18,
-                backgroundColor: AppColors.primary,
+                backgroundColor: context.colors.primary,
                 child: Text(
                   (p?.name.isNotEmpty ?? false) ? p!.name[0].toUpperCase() : '?',
-                  style: const TextStyle(
-                    color: AppColors.background,
+                  style: TextStyle(
+                    color: context.colors.background,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -167,7 +167,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   label: 'Study',
                   value:
                       '${(study.totalToday().inMinutes / 60).toStringAsFixed(1)}h',
-                  iconColor: AppColors.primary,
+                  iconColor: context.colors.primary,
                 ),
               ),
               const SizedBox(width: 10),
@@ -176,7 +176,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   icon: Icons.check_circle,
                   label: 'Habits',
                   value: '${habits.doneTodayCount()}/${habits.habits.length}',
-                  iconColor: AppColors.success,
+                  iconColor: context.colors.success,
                 ),
               ),
             ],
@@ -189,7 +189,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   icon: Icons.mosque,
                   label: 'Prayers',
                   value: '${prayer.completedToday()}/5',
-                  iconColor: AppColors.accent,
+                  iconColor: context.colors.accent,
                 ),
               ),
               const SizedBox(width: 10),
@@ -199,7 +199,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   label: 'Workout',
                   value:
                       '${fitness.totalWorkoutToday().inMinutes}m',
-                  iconColor: AppColors.warning,
+                  iconColor: context.colors.warning,
                 ),
               ),
             ],
@@ -211,18 +211,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTap: () => widget.onJumpTab?.call(3),
               child: Row(
                 children: [
-                  const Icon(Icons.access_time, color: AppColors.accent),
+                  Icon(Icons.access_time, color: context.colors.accent),
                   const SizedBox(width: 12),
                   Text(nextSlot.labelOn(nextTime),
-                      style: const TextStyle(
-                        color: AppColors.text,
+                      style: TextStyle(
+                        color: context.colors.text,
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
                       )),
                   const Spacer(),
                   Text(DateX.prettyTime(nextTime),
-                      style: const TextStyle(
-                        color: AppColors.accent,
+                      style: TextStyle(
+                        color: context.colors.accent,
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
                       )),
@@ -253,14 +253,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.15),
+                  color: context.colors.accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.accent, width: 2),
+                  border: Border.all(color: context.colors.accent, width: 2),
                 ),
                 alignment: Alignment.center,
                 child: Text('${gam.level.level}',
-                    style: const TextStyle(
-                      color: AppColors.accent,
+                    style: TextStyle(
+                      color: context.colors.accent,
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                     )),
@@ -272,8 +272,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Text(
                       gam.title.toUpperCase(),
-                      style: const TextStyle(
-                        color: AppColors.accent,
+                      style: TextStyle(
+                        color: context.colors.accent,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 2.5,
@@ -281,8 +281,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text('${gam.totalXp} XP',
-                        style: const TextStyle(
-                          color: AppColors.text,
+                        style: TextStyle(
+                          color: context.colors.text,
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                         )),
@@ -294,13 +294,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.accent,
+                    color: context.colors.accent,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     '${gam.newlyUnlocked.length} NEW',
-                    style: const TextStyle(
-                      color: AppColors.background,
+                    style: TextStyle(
+                      color: context.colors.background,
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1,
@@ -310,8 +310,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               else
                 Text(
                   '$unlockedCount badges',
-                  style: const TextStyle(
-                      color: AppColors.muted, fontSize: 12),
+                  style: TextStyle(
+                      color: context.colors.muted, fontSize: 12),
                 ),
             ],
           ),
@@ -321,14 +321,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: LinearProgressIndicator(
               value: gam.level.progress,
               minHeight: 8,
-              backgroundColor: AppColors.surfaceAlt,
-              color: AppColors.accent,
+              backgroundColor: context.colors.surfaceAlt,
+              color: context.colors.accent,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             '${gam.level.xpToNextLevel} XP to level ${gam.level.level + 1}',
-            style: const TextStyle(color: AppColors.muted, fontSize: 12),
+            style: TextStyle(color: context.colors.muted, fontSize: 12),
           ),
         ],
       ),
@@ -350,9 +350,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Daily score',
+          Text('Daily score',
               style: TextStyle(
-                color: AppColors.muted,
+                color: context.colors.muted,
                 fontWeight: FontWeight.w600,
               )),
           const SizedBox(height: 10),
@@ -360,34 +360,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text('$score',
-                  style: const TextStyle(
-                    color: AppColors.text,
+                  style: TextStyle(
+                    color: context.colors.text,
                     fontSize: 48,
                     fontWeight: FontWeight.w800,
                     height: 1,
                   )),
               const SizedBox(width: 6),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(bottom: 8),
                 child: Text('/ 100',
-                    style: TextStyle(color: AppColors.muted)),
+                    style: TextStyle(color: context.colors.muted)),
               ),
               const Spacer(),
               Text(title,
-                  style: const TextStyle(
-                    color: AppColors.accent,
+                  style: TextStyle(
+                    color: context.colors.accent,
                     fontWeight: FontWeight.w700,
                   )),
             ],
           ),
           const SizedBox(height: 14),
-          _miniBar('Study', sP, AppColors.primary),
+          _miniBar('Study', sP, context.colors.primary),
           const SizedBox(height: 6),
-          _miniBar('Habits', hP, AppColors.success),
+          _miniBar('Habits', hP, context.colors.success),
           const SizedBox(height: 6),
-          _miniBar('Prayer', pP, AppColors.accent),
+          _miniBar('Prayer', pP, context.colors.accent),
           const SizedBox(height: 6),
-          _miniBar('Fitness', fP, AppColors.warning),
+          _miniBar('Fitness', fP, context.colors.warning),
         ],
       ),
     );
@@ -400,14 +400,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             width: 56,
             child: Text(label,
                 style:
-                    const TextStyle(color: AppColors.muted, fontSize: 12))),
+                    TextStyle(color: context.colors.muted, fontSize: 12))),
         Expanded(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: pct,
               minHeight: 7,
-              backgroundColor: AppColors.surfaceAlt,
+              backgroundColor: context.colors.surfaceAlt,
               color: color,
             ),
           ),
@@ -417,7 +417,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           width: 36,
           child: Text('${(pct * 100).round()}%',
               textAlign: TextAlign.end,
-              style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+              style: TextStyle(color: context.colors.muted, fontSize: 12)),
         ),
       ],
     );
@@ -482,17 +482,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           return ListTile(
             onTap: it.onTap,
             leading: Icon(it.icon,
-                color: it.done ? AppColors.success : AppColors.muted),
+                color: it.done ? context.colors.success : context.colors.muted),
             title: Text(it.text,
                 style: TextStyle(
-                  color: it.done ? AppColors.muted : AppColors.text,
+                  color: it.done ? context.colors.muted : context.colors.text,
                   decoration:
                       it.done ? TextDecoration.lineThrough : TextDecoration.none,
                   fontWeight: FontWeight.w500,
                 )),
             trailing: it.done
-                ? const Icon(Icons.check_circle, color: AppColors.success)
-                : const Icon(Icons.chevron_right, color: AppColors.muted),
+                ? Icon(Icons.check_circle, color: context.colors.success)
+                : Icon(Icons.chevron_right, color: context.colors.muted),
           );
         }).toList(),
       ),

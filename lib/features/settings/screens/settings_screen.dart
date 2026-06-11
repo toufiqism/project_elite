@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/storage/hive_setup.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../../../shared/widgets/elite_card.dart';
 import '../../auth/state/auth_controller.dart';
 import '../../fitness/state/fitness_controller.dart';
@@ -41,11 +42,14 @@ class SettingsScreen extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(
             20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
         children: [
+          const SectionHeader(title: 'Appearance'),
+          _appearanceCard(context),
+          const SizedBox(height: 24),
           const SectionHeader(title: 'Fitness API'),
           _apiKeyCard(context, fitness),
           const SizedBox(height: 24),
           const SectionHeader(title: 'Notification tone'),
-          _toneSelector(s.tone, (t) => apply(s.copyWith(tone: t))),
+          _toneSelector(context, s.tone, (t) => apply(s.copyWith(tone: t))),
           const SizedBox(height: 24),
           const SectionHeader(title: 'Which reminders'),
           EliteCard(
@@ -53,6 +57,7 @@ class SettingsScreen extends StatelessWidget {
             child: Column(
               children: [
                 _toggle(
+                  context,
                   icon: Icons.mosque,
                   title: 'Prayer times',
                   subtitle:
@@ -60,8 +65,9 @@ class SettingsScreen extends StatelessWidget {
                   value: s.prayerOn,
                   onChanged: (v) => apply(s.copyWith(prayerOn: v)),
                 ),
-                _divider(),
+                _divider(context),
                 _toggle(
+                  context,
                   icon: Icons.menu_book,
                   title: 'Study block',
                   subtitle:
@@ -69,8 +75,9 @@ class SettingsScreen extends StatelessWidget {
                   value: s.studyOn,
                   onChanged: (v) => apply(s.copyWith(studyOn: v)),
                 ),
-                _divider(),
+                _divider(context),
                 _toggle(
+                  context,
                   icon: Icons.water_drop,
                   title: 'Water',
                   subtitle:
@@ -78,8 +85,9 @@ class SettingsScreen extends StatelessWidget {
                   value: s.waterOn,
                   onChanged: (v) => apply(s.copyWith(waterOn: v)),
                 ),
-                _divider(),
+                _divider(context),
                 _toggle(
+                  context,
                   icon: Icons.local_fire_department,
                   title: "Don't break the streak",
                   subtitle:
@@ -143,9 +151,24 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed: () => ctrl.reschedule(
-              prayerTimesByDay: prayer.timesForUpcomingDays(days: 7),
-            ),
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              try {
+                await ctrl.reschedule(
+                  prayerTimesByDay: prayer.timesForUpcomingDays(days: 7),
+                );
+                final n = await ctrl.pendingCount();
+                if (!context.mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(content: Text('Rescheduled — $n now queued.')),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(content: Text('Reschedule failed: $e')),
+                );
+              }
+            },
             icon: const Icon(Icons.refresh),
             label: const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
@@ -166,34 +189,34 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: () => _confirmSignOut(context),
-            icon: const Icon(Icons.logout, color: AppColors.danger),
-            label: const Padding(
+            icon: Icon(Icons.logout, color: context.colors.danger),
+            label: Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Text('Sign out',
-                  style: TextStyle(color: AppColors.danger)),
+                  style: TextStyle(color: context.colors.danger)),
             ),
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.danger),
+              side: BorderSide(color: context.colors.danger),
             ),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () => _confirmDeleteAccount(context),
-            icon: const Icon(Icons.delete_forever, color: AppColors.danger),
-            label: const Padding(
+            icon: Icon(Icons.delete_forever, color: context.colors.danger),
+            label: Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Text('Delete account',
-                  style: TextStyle(color: AppColors.danger)),
+                  style: TextStyle(color: context.colors.danger)),
             ),
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.danger),
+              side: BorderSide(color: context.colors.danger),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Permanently erases your cloud backup, account, and all on-device data. '
             'This cannot be undone.',
-            style: TextStyle(color: AppColors.muted, fontSize: 12),
+            style: TextStyle(color: context.colors.muted, fontSize: 12),
           ),
         ],
       ),
@@ -209,15 +232,15 @@ class SettingsScreen extends StatelessWidget {
     final first = await showDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.colors.surface,
         title: const Text('Delete your account?'),
-        content: const Text(
+        content: Text(
           'This will permanently delete:\n'
           '  • Your cloud backup\n'
           '  • Your sign-in credentials\n'
           '  • All data on this device\n\n'
           'You will not be able to recover any of it.',
-          style: TextStyle(color: AppColors.muted),
+          style: TextStyle(color: context.colors.muted),
         ),
         actions: [
           TextButton(
@@ -226,7 +249,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dctx, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            style: FilledButton.styleFrom(backgroundColor: context.colors.danger),
             child: const Text('Continue'),
           ),
         ],
@@ -239,7 +262,7 @@ class SettingsScreen extends StatelessWidget {
     final second = await showDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.colors.surface,
         title: const Text('Type DELETE to confirm'),
         content: TextField(
           controller: typed,
@@ -253,7 +276,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dctx, typed.text.trim() == 'DELETE'),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            style: FilledButton.styleFrom(backgroundColor: context.colors.danger),
             child: const Text('Delete forever'),
           ),
         ],
@@ -308,9 +331,9 @@ class SettingsScreen extends StatelessWidget {
       await showDialog(
         context: context,
         builder: (dctx) => AlertDialog(
-          backgroundColor: AppColors.surface,
+          backgroundColor: context.colors.surface,
           title: const Text('Account deletion incomplete'),
-          content: Text(err!, style: const TextStyle(color: AppColors.muted)),
+          content: Text(err!, style: TextStyle(color: context.colors.muted)),
           actions: [
             FilledButton(
               onPressed: () => Navigator.pop(dctx),
@@ -326,11 +349,11 @@ class SettingsScreen extends StatelessWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.colors.surface,
         title: const Text('Sign out?'),
-        content: const Text(
+        content: Text(
           'You will need to sign in again to access your data.',
-          style: TextStyle(color: AppColors.muted),
+          style: TextStyle(color: context.colors.muted),
         ),
         actions: [
           TextButton(
@@ -339,7 +362,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dctx, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            style: FilledButton.styleFrom(backgroundColor: context.colors.danger),
             child: const Text('Sign out'),
           ),
         ],
@@ -354,6 +377,43 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  Widget _appearanceCard(BuildContext context) {
+    final themeCtrl = context.watch<ThemeController>();
+    return EliteCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Theme',
+              style: TextStyle(
+                  color: context.colors.muted, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 12),
+          SegmentedButton<ThemeMode>(
+            segments: const [
+              ButtonSegment(
+                value: ThemeMode.light,
+                label: Text('Light'),
+                icon: Icon(Icons.light_mode),
+              ),
+              ButtonSegment(
+                value: ThemeMode.dark,
+                label: Text('Dark'),
+                icon: Icon(Icons.dark_mode),
+              ),
+              ButtonSegment(
+                value: ThemeMode.system,
+                label: Text('System'),
+                icon: Icon(Icons.brightness_auto),
+              ),
+            ],
+            selected: {themeCtrl.mode},
+            onSelectionChanged: (sel) => themeCtrl.setMode(sel.first),
+            showSelectedIcon: false,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _apiKeyCard(BuildContext context, FitnessController fitness) {
     final masked = fitness.hasApiKey
         ? '${fitness.repository.apiKey.substring(0, 4)}…'
@@ -364,22 +424,22 @@ class SettingsScreen extends StatelessWidget {
         children: [
           Icon(
             fitness.hasApiKey ? Icons.check_circle : Icons.vpn_key,
-            color: fitness.hasApiKey ? AppColors.success : AppColors.accent,
+            color: fitness.hasApiKey ? context.colors.success : context.colors.accent,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('ExerciseDB (RapidAPI)',
+                Text('ExerciseDB (RapidAPI)',
                     style: TextStyle(
-                      color: AppColors.text,
+                      color: context.colors.text,
                       fontWeight: FontWeight.w600,
                     )),
                 const SizedBox(height: 2),
                 Text(masked,
-                    style: const TextStyle(
-                        color: AppColors.muted, fontSize: 12)),
+                    style: TextStyle(
+                        color: context.colors.muted, fontSize: 12)),
               ],
             ),
           ),
@@ -397,15 +457,15 @@ class SettingsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.colors.surface,
         title: const Text('ExerciseDB API key'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Sign up at rapidapi.com/justin-WFnsXH_t6/api/exercisedb and paste your x-rapidapi-key below.',
-              style: TextStyle(color: AppColors.muted, fontSize: 12),
+              style: TextStyle(color: context.colors.muted, fontSize: 12),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -432,8 +492,8 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _toneSelector(
-      NotificationTone current, ValueChanged<NotificationTone> onPick) {
+  Widget _toneSelector(BuildContext context, NotificationTone current,
+      ValueChanged<NotificationTone> onPick) {
     final items = [
       (
         NotificationTone.silent,
@@ -462,13 +522,13 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 10),
           child: EliteCard(
             onTap: () => onPick(tone),
-            color: selected ? AppColors.primary.withValues(alpha: 0.08) : null,
+            color: selected ? context.colors.primary.withValues(alpha: 0.08) : null,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             child: Row(
               children: [
                 Icon(
                   t.$4,
-                  color: selected ? AppColors.primary : AppColors.muted,
+                  color: selected ? context.colors.primary : context.colors.muted,
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -478,15 +538,15 @@ class SettingsScreen extends StatelessWidget {
                       Text(t.$2,
                           style: TextStyle(
                             color: selected
-                                ? AppColors.primary
-                                : AppColors.text,
+                                ? context.colors.primary
+                                : context.colors.text,
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
                           )),
                       const SizedBox(height: 2),
                       Text(t.$3,
-                          style: const TextStyle(
-                              color: AppColors.muted, fontSize: 12)),
+                          style: TextStyle(
+                              color: context.colors.muted, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -496,7 +556,7 @@ class SettingsScreen extends StatelessWidget {
                   onChanged: (v) {
                     if (v != null) onPick(v);
                   },
-                  activeColor: AppColors.primary,
+                  activeColor: context.colors.primary,
                 ),
               ],
             ),
@@ -506,7 +566,8 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _toggle({
+  Widget _toggle(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,
@@ -516,23 +577,23 @@ class SettingsScreen extends StatelessWidget {
     return SwitchListTile(
       value: value,
       onChanged: onChanged,
-      activeThumbColor: AppColors.primary,
+      activeThumbColor: context.colors.primary,
       title: Text(title,
-          style: const TextStyle(
-            color: AppColors.text,
+          style: TextStyle(
+            color: context.colors.text,
             fontWeight: FontWeight.w600,
           )),
       subtitle: Text(subtitle,
-          style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+          style: TextStyle(color: context.colors.muted, fontSize: 12)),
       secondary:
-          Icon(icon, color: value ? AppColors.primary : AppColors.muted),
+          Icon(icon, color: value ? context.colors.primary : context.colors.muted),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14),
     );
   }
 
-  Widget _divider() => const Divider(
+  Widget _divider(BuildContext context) => Divider(
         height: 0,
-        color: AppColors.surfaceAlt,
+        color: context.colors.surfaceAlt,
         indent: 14,
         endIndent: 14,
       );
@@ -548,7 +609,7 @@ class SettingsScreen extends StatelessWidget {
       children: [
         Expanded(
           child:
-              Text(label, style: const TextStyle(color: AppColors.muted)),
+              Text(label, style: TextStyle(color: context.colors.muted)),
         ),
         TextButton(
           onPressed: () async {
@@ -559,8 +620,8 @@ class SettingsScreen extends StatelessWidget {
             if (res != null) onPicked(res.hour, res.minute);
           },
           child: Text(_fmtTime(hour, minute),
-              style: const TextStyle(
-                color: AppColors.text,
+              style: TextStyle(
+                color: context.colors.text,
                 fontWeight: FontWeight.w700,
                 fontSize: 15,
               )),
@@ -577,9 +638,9 @@ class SettingsScreen extends StatelessWidget {
   }) {
     return Row(
       children: [
-        const Expanded(
+        Expanded(
           child: Text('Water reminder window',
-              style: TextStyle(color: AppColors.muted)),
+              style: TextStyle(color: context.colors.muted)),
         ),
         TextButton(
           onPressed: () async {
@@ -599,8 +660,8 @@ class SettingsScreen extends StatelessWidget {
             onPicked(s.hour, e.hour);
           },
           child: Text('${_fmtHour(startHour)} – ${_fmtHour(endHour)}',
-              style: const TextStyle(
-                color: AppColors.text,
+              style: TextStyle(
+                color: context.colors.text,
                 fontWeight: FontWeight.w700,
                 fontSize: 15,
               )),
@@ -691,12 +752,12 @@ class _SyncSectionState extends State<_SyncSection> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.colors.surface,
         title: const Text('Restore from cloud?'),
-        content: const Text(
+        content: Text(
           'This will overwrite all local data with your cloud backup. '
           'This cannot be undone.',
-          style: TextStyle(color: AppColors.muted),
+          style: TextStyle(color: context.colors.muted),
         ),
         actions: [
           TextButton(
@@ -706,9 +767,9 @@ class _SyncSectionState extends State<_SyncSection> {
           FilledButton(
             onPressed: () => Navigator.pop(dctx, true),
             style: FilledButton.styleFrom(
-                backgroundColor: AppColors.warning),
-            child: const Text('Restore',
-                style: TextStyle(color: AppColors.background)),
+                backgroundColor: context.colors.warning),
+            child: Text('Restore',
+                style: TextStyle(color: context.colors.background)),
           ),
         ],
       ),
@@ -746,28 +807,28 @@ class _SyncSectionState extends State<_SyncSection> {
         children: [
           Row(
             children: [
-              const Icon(Icons.cloud_outlined,
-                  color: AppColors.primary, size: 20),
+              Icon(Icons.cloud_outlined,
+                  color: context.colors.primary, size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Cloud backup',
+                    Text('Cloud backup',
                         style: TextStyle(
-                            color: AppColors.text,
+                            color: context.colors.text,
                             fontWeight: FontWeight.w700)),
                     const SizedBox(height: 2),
                     _loadingTs
-                        ? const Text('Checking…',
+                        ? Text('Checking…',
                             style: TextStyle(
-                                color: AppColors.muted, fontSize: 12))
+                                color: context.colors.muted, fontSize: 12))
                         : Text(
                             _cloudTs == null
                                 ? 'Never backed up'
                                 : 'Last upload: ${DateFormat('d MMM y, HH:mm').format(_cloudTs!.toLocal())}',
-                            style: const TextStyle(
-                                color: AppColors.muted, fontSize: 12)),
+                            style: TextStyle(
+                                color: context.colors.muted, fontSize: 12)),
                   ],
                 ),
               ),
@@ -779,12 +840,12 @@ class _SyncSectionState extends State<_SyncSection> {
               padding: const EdgeInsets.symmetric(
                   horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.danger.withValues(alpha: 0.12),
+                color: context.colors.danger.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(_error!,
-                  style: const TextStyle(
-                      color: AppColors.danger, fontSize: 12)),
+                  style: TextStyle(
+                      color: context.colors.danger, fontSize: 12)),
             ),
           ],
           if (_success != null) ...[
@@ -793,12 +854,12 @@ class _SyncSectionState extends State<_SyncSection> {
               padding: const EdgeInsets.symmetric(
                   horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.12),
+                color: context.colors.success.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(_success!,
-                  style: const TextStyle(
-                      color: AppColors.success, fontSize: 12)),
+                  style: TextStyle(
+                      color: context.colors.success, fontSize: 12)),
             ),
           ],
           const SizedBox(height: 16),
@@ -808,12 +869,12 @@ class _SyncSectionState extends State<_SyncSection> {
                 child: OutlinedButton.icon(
                   onPressed: busy ? null : _upload,
                   icon: _uploading
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 14,
                           height: 14,
                           child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: AppColors.primary))
+                              color: context.colors.primary))
                       : const Icon(Icons.cloud_upload_outlined, size: 18),
                   label: const Text('Upload'),
                 ),
@@ -823,11 +884,11 @@ class _SyncSectionState extends State<_SyncSection> {
                 child: OutlinedButton.icon(
                   onPressed: busy ? null : _restore,
                   icon: _restoring
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 14,
                           height: 14,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: AppColors.text))
+                              strokeWidth: 2, color: context.colors.text))
                       : const Icon(Icons.cloud_download_outlined,
                           size: 18),
                   label: const Text('Restore'),
@@ -901,7 +962,7 @@ class _BatteryOptimizationCardState extends State<_BatteryOptimizationCard>
             children: [
               Icon(
                 _exempt ? Icons.check_circle : Icons.battery_alert,
-                color: _exempt ? AppColors.success : AppColors.warning,
+                color: _exempt ? context.colors.success : context.colors.warning,
                 size: 20,
               ),
               const SizedBox(width: 10),
@@ -909,9 +970,9 @@ class _BatteryOptimizationCardState extends State<_BatteryOptimizationCard>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Background reliability',
+                    Text('Background reliability',
                         style: TextStyle(
-                            color: AppColors.text,
+                            color: context.colors.text,
                             fontWeight: FontWeight.w700)),
                     const SizedBox(height: 2),
                     Text(
@@ -920,8 +981,8 @@ class _BatteryOptimizationCardState extends State<_BatteryOptimizationCard>
                           : _exempt
                               ? 'Battery optimization is off for this app. Notifications will fire even when the app is closed.'
                               : 'Android may kill scheduled notifications when the app is closed. Whitelist this app to ensure reminders fire on time.',
-                      style: const TextStyle(
-                          color: AppColors.muted, fontSize: 12),
+                      style: TextStyle(
+                          color: context.colors.muted, fontSize: 12),
                     ),
                   ],
                 ),
@@ -959,8 +1020,18 @@ class _PendingNotifCardState extends State<_PendingNotifCard> {
 
   Future<void> _check() async {
     setState(() => _loading = true);
-    final n = await context.read<NotificationController>().pendingCount();
-    if (mounted) setState(() { _count = n; _loading = false; });
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final n = await context.read<NotificationController>().pendingCount();
+      if (mounted) setState(() => _count = n);
+    } catch (e) {
+      // Surface the error instead of leaving the spinner stuck forever.
+      messenger.showSnackBar(
+        SnackBar(content: Text('Could not read scheduled notifications: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -976,19 +1047,19 @@ class _PendingNotifCardState extends State<_PendingNotifCard> {
                     : Icons.warning_amber_rounded,
             size: 20,
             color: _count == null
-                ? AppColors.muted
+                ? context.colors.muted
                 : _count! > 0
-                    ? AppColors.success
-                    : AppColors.warning,
+                    ? context.colors.success
+                    : context.colors.warning,
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Scheduled notifications',
+                Text('Scheduled notifications',
                     style: TextStyle(
-                        color: AppColors.text, fontWeight: FontWeight.w700)),
+                        color: context.colors.text, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
                 Text(
                   _count == null
@@ -996,7 +1067,7 @@ class _PendingNotifCardState extends State<_PendingNotifCard> {
                       : _count! > 0
                           ? '$_count notification${_count! == 1 ? '' : 's'} are queued by the OS'
                           : 'None queued — tap "Reschedule" above, then check again',
-                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                  style: TextStyle(color: context.colors.muted, fontSize: 12),
                 ),
               ],
             ),
@@ -1005,11 +1076,11 @@ class _PendingNotifCardState extends State<_PendingNotifCard> {
           TextButton(
             onPressed: _loading ? null : _check,
             child: _loading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: AppColors.primary))
+                        strokeWidth: 2, color: context.colors.primary))
                 : const Text('Check'),
           ),
         ],
@@ -1050,17 +1121,17 @@ class _OemAutostartGuidance extends StatelessWidget {
       child: ExpansionTile(
         tilePadding: EdgeInsets.zero,
         childrenPadding: const EdgeInsets.only(top: 8, bottom: 4),
-        title: const Text(
+        title: Text(
           'Reminders still get killed?',
           style: TextStyle(
-            color: AppColors.text,
+            color: context.colors.text,
             fontWeight: FontWeight.w600,
             fontSize: 14,
           ),
         ),
-        subtitle: const Text(
+        subtitle: Text(
           'Some Android phones need an extra Autostart permission',
-          style: TextStyle(color: AppColors.muted, fontSize: 12),
+          style: TextStyle(color: context.colors.muted, fontSize: 12),
         ),
         children: [
           for (final b in _brands)
@@ -1070,14 +1141,14 @@ class _OemAutostartGuidance extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(b.$1,
-                      style: const TextStyle(
-                          color: AppColors.text,
+                      style: TextStyle(
+                          color: context.colors.text,
                           fontWeight: FontWeight.w600,
                           fontSize: 12)),
                   const SizedBox(height: 2),
                   Text(b.$2,
-                      style: const TextStyle(
-                          color: AppColors.muted, fontSize: 12)),
+                      style: TextStyle(
+                          color: context.colors.muted, fontSize: 12)),
                 ],
               ),
             ),

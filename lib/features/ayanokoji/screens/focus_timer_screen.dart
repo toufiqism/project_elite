@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -77,7 +77,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.colors.surface,
         title: const Text('End focus session?'),
         content: Text(
           'You\'ve focused for ${formatDuration(Duration(seconds: _elapsedSeconds))}. '
@@ -90,8 +90,8 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-                backgroundColor: AppColors.danger,
-                foregroundColor: AppColors.background),
+                backgroundColor: context.colors.danger,
+                foregroundColor: context.colors.background),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('End anyway'),
           ),
@@ -133,7 +133,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
                 Text(
                   'FOCUS LOCK',
                   style: TextStyle(
-                    color: AppColors.muted.withValues(alpha: 0.5),
+                    color: context.colors.muted.withValues(alpha: 0.5),
                     fontSize: 12,
                     letterSpacing: 6,
                     fontWeight: FontWeight.w700,
@@ -150,14 +150,14 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
                         child: CircularProgressIndicator(
                           value: progress,
                           strokeWidth: 6,
-                          backgroundColor: AppColors.surfaceAlt,
-                          color: AppColors.accent,
+                          backgroundColor: context.colors.surfaceAlt,
+                          color: context.colors.accent,
                         ),
                       ),
                       Text(
                         formatHms(Duration(seconds: remaining)),
-                        style: const TextStyle(
-                          color: AppColors.text,
+                        style: TextStyle(
+                          color: context.colors.text,
                           fontSize: 44,
                           fontWeight: FontWeight.w200,
                           letterSpacing: 2,
@@ -170,7 +170,7 @@ class _FocusTimerScreenState extends State<FocusTimerScreen> {
                 const SizedBox(height: 12),
                 Text(
                   '${(widget.durationSeconds / 60).round()} min planned',
-                  style: const TextStyle(color: AppColors.muted),
+                  style: TextStyle(color: context.colors.muted),
                 ),
                 const Spacer(),
                 Row(

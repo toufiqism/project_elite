@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -83,9 +83,9 @@ class _StudyTimerScreenState extends State<StudyTimerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _focusMode ? Colors.black : AppColors.background,
+      backgroundColor: _focusMode ? Colors.black : context.colors.background,
       appBar: AppBar(
-        backgroundColor: _focusMode ? Colors.black : AppColors.background,
+        backgroundColor: _focusMode ? Colors.black : context.colors.background,
         title: Text(widget.subject),
         actions: [
           IconButton(
@@ -104,7 +104,7 @@ class _StudyTimerScreenState extends State<StudyTimerScreen> {
               Text(
                 'FOCUS',
                 style: TextStyle(
-                  color: AppColors.muted.withValues(alpha: 0.5),
+                  color: context.colors.muted.withValues(alpha: 0.5),
                   fontSize: 14,
                   letterSpacing: 6,
                   fontWeight: FontWeight.w600,
@@ -113,8 +113,8 @@ class _StudyTimerScreenState extends State<StudyTimerScreen> {
               const SizedBox(height: 16),
               Text(
                 formatHms(_elapsed),
-                style: const TextStyle(
-                  color: AppColors.text,
+                style: TextStyle(
+                  color: context.colors.text,
                   fontSize: 72,
                   fontWeight: FontWeight.w200,
                   fontFeatures: [FontFeature.tabularFigures()],
@@ -123,7 +123,7 @@ class _StudyTimerScreenState extends State<StudyTimerScreen> {
               ),
               const SizedBox(height: 8),
               Text(widget.subject,
-                  style: const TextStyle(color: AppColors.muted)),
+                  style: TextStyle(color: context.colors.muted)),
               const Spacer(),
               if (!_focusMode)
                 TextField(

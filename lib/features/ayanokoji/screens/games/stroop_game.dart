@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -91,20 +91,20 @@ class _StroopGameState extends State<StroopGame> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.colors.surface,
         title: const Text('Time'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Correct: $_correct',
-                style: const TextStyle(color: AppColors.text, fontSize: 18)),
+                style: TextStyle(color: context.colors.text, fontSize: 18)),
             Text('Wrong: $_wrong',
-                style: const TextStyle(color: AppColors.muted)),
+                style: TextStyle(color: context.colors.muted)),
             const SizedBox(height: 8),
             Text('+$xp Intelligence XP',
-                style: const TextStyle(
-                    color: AppColors.accent, fontWeight: FontWeight.w700)),
+                style: TextStyle(
+                    color: context.colors.accent, fontWeight: FontWeight.w700)),
           ],
         ),
         actions: [
@@ -129,9 +129,9 @@ class _StroopGameState extends State<StroopGame> {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const Text(
+              Text(
                 'Pick the COLOR the word is painted, not what it spells.',
-                style: TextStyle(color: AppColors.muted),
+                style: TextStyle(color: context.colors.muted),
                 textAlign: TextAlign.center,
               ),
               const Spacer(),
@@ -172,7 +172,7 @@ class _StroopGameState extends State<StroopGame> {
               const SizedBox(height: 24),
               Text(
                 'Correct: $_correct  ·  Wrong: $_wrong',
-                style: const TextStyle(color: AppColors.muted),
+                style: TextStyle(color: context.colors.muted),
               ),
             ],
           ),

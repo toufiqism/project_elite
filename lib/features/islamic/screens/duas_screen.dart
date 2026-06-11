@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/elite_card.dart';
@@ -64,17 +64,17 @@ class _DuasScreenState extends State<DuasScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: selected
-                ? AppColors.accent.withValues(alpha: 0.18)
-                : AppColors.surface,
+                ? context.colors.accent.withValues(alpha: 0.18)
+                : context.colors.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: selected ? AppColors.accent : AppColors.surfaceAlt,
+              color: selected ? context.colors.accent : context.colors.surfaceAlt,
             ),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: selected ? AppColors.accent : AppColors.text,
+              color: selected ? context.colors.accent : context.colors.text,
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),
@@ -102,8 +102,8 @@ class DuaCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(dua.title,
-                    style: const TextStyle(
-                      color: AppColors.text,
+                    style: TextStyle(
+                      color: context.colors.text,
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
                     )),
@@ -112,13 +112,13 @@ class DuaCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceAlt,
+                  color: context.colors.surfaceAlt,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   dua.category.toUpperCase(),
-                  style: const TextStyle(
-                    color: AppColors.muted,
+                  style: TextStyle(
+                    color: context.colors.muted,
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.2,
@@ -132,8 +132,8 @@ class DuaCard extends StatelessWidget {
             dua.arabic,
             textDirection: TextDirection.rtl,
             textAlign: TextAlign.right,
-            style: const TextStyle(
-              color: AppColors.accent,
+            style: TextStyle(
+              color: context.colors.accent,
               fontSize: 22,
               height: 1.7,
               fontWeight: FontWeight.w600,
@@ -142,8 +142,8 @@ class DuaCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             dua.transliteration,
-            style: const TextStyle(
-              color: AppColors.text,
+            style: TextStyle(
+              color: context.colors.text,
               fontStyle: FontStyle.italic,
               height: 1.4,
             ),
@@ -151,13 +151,13 @@ class DuaCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             dua.meaning,
-            style: const TextStyle(color: AppColors.muted, height: 1.4),
+            style: TextStyle(color: context.colors.muted, height: 1.4),
           ),
           if (dua.reference.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
               '— ${dua.reference}',
-              style: const TextStyle(color: AppColors.muted, fontSize: 11),
+              style: TextStyle(color: context.colors.muted, fontSize: 11),
             ),
           ],
         ],

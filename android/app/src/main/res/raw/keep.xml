@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The release build runs R8 + resource shrinking (enabled by default by the
+     Flutter Gradle plugin). ic_stat_notification is referenced only by a runtime
+     string passed to flutter_local_notifications, so the shrinker marks it
+     reachable=false and strips it — which made _plugin.initialize() throw
+     invalid_icon and killed the entire notification subsystem in release.
+     Keep it explicitly. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_notification" />

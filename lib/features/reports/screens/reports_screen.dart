@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -44,10 +44,10 @@ class ReportsScreen extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(
             20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
         children: [
-          _scoreCard(month),
+          _scoreCard(context, month),
           const SizedBox(height: 24),
           const SectionHeader(title: 'This week'),
-          ..._weeklyBody(week),
+          ..._weeklyBody(context, week),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             icon: const Icon(Icons.ios_share),
@@ -56,7 +56,7 @@ class ReportsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           const SectionHeader(title: 'This month'),
-          ..._monthlyBody(month),
+          ..._monthlyBody(context, month),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             icon: const Icon(Icons.ios_share),
@@ -74,36 +74,37 @@ class ReportsScreen extends StatelessWidget {
     Share.share(text, subject: r.label);
   }
 
-  Widget _scoreCard(PeriodReport month) {
+  Widget _scoreCard(BuildContext context, PeriodReport month) {
     return EliteCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('This month',
+          Text('This month',
               style: TextStyle(
-                  color: AppColors.muted, fontWeight: FontWeight.w600)),
+                  color: context.colors.muted, fontWeight: FontWeight.w600)),
           const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
-                  child: _scoreTile(
-                      'Productivity', month.productivityScore, AppColors.primary)),
+                  child: _scoreTile(context, 'Productivity',
+                      month.productivityScore, context.colors.primary)),
               const SizedBox(width: 10),
               Expanded(
-                child: _scoreTile('Self-improvement',
-                    month.selfImprovementScore, AppColors.accent),
+                child: _scoreTile(context, 'Self-improvement',
+                    month.selfImprovementScore, context.colors.accent),
               ),
             ],
           ),
           const SizedBox(height: 10),
           Text('${month.xpInPeriod} XP earned',
-              style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+              style: TextStyle(color: context.colors.muted, fontSize: 12)),
         ],
       ),
     );
   }
 
-  Widget _scoreTile(String label, int value, Color color) {
+  Widget _scoreTile(
+      BuildContext context, String label, int value, Color color) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -125,8 +126,8 @@ class ReportsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text('$value / 100',
-              style: const TextStyle(
-                color: AppColors.text,
+              style: TextStyle(
+                color: context.colors.text,
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
               )),
@@ -135,53 +136,57 @@ class ReportsScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> _weeklyBody(PeriodReport r) {
+  List<Widget> _weeklyBody(BuildContext context, PeriodReport r) {
     return [
-      _consistencyCard(r),
+      _consistencyCard(context, r),
       const SizedBox(height: 12),
-      _summaryGrid(r),
+      _summaryGrid(context, r),
       const SizedBox(height: 12),
-      if (r.habitBreakdown.isNotEmpty) _habitBreakdownCard(r),
+      if (r.habitBreakdown.isNotEmpty) _habitBreakdownCard(context, r),
     ];
   }
 
-  List<Widget> _monthlyBody(PeriodReport r) {
+  List<Widget> _monthlyBody(BuildContext context, PeriodReport r) {
     return [
-      _consistencyCard(r),
+      _consistencyCard(context, r),
       const SizedBox(height: 12),
-      _summaryGrid(r),
+      _summaryGrid(context, r),
       const SizedBox(height: 12),
-      if (r.weightChangeKg != null) _weightCard(r),
+      if (r.weightChangeKg != null) _weightCard(context, r),
       if (r.habitBreakdown.isNotEmpty) ...[
         const SizedBox(height: 12),
-        _habitBreakdownCard(r),
+        _habitBreakdownCard(context, r),
       ],
     ];
   }
 
-  Widget _consistencyCard(PeriodReport r) {
+  Widget _consistencyCard(BuildContext context, PeriodReport r) {
     return EliteCard(
       child: Column(
         children: [
-          _bar('Study days at goal', r.studyConsistency, AppColors.primary),
+          _bar(context, 'Study days at goal', r.studyConsistency,
+              context.colors.primary),
           const SizedBox(height: 10),
-          _bar('Workout days', r.workoutConsistency, AppColors.warning),
+          _bar(context, 'Workout days', r.workoutConsistency,
+              context.colors.warning),
           const SizedBox(height: 10),
-          _bar('Prayer (5/5 days)', r.prayerConsistency, AppColors.accent),
+          _bar(context, 'Prayer (5/5 days)', r.prayerConsistency,
+              context.colors.accent),
           const SizedBox(height: 10),
-          _bar('Habit success', r.habitSuccessRate, AppColors.success),
+          _bar(context, 'Habit success', r.habitSuccessRate,
+              context.colors.success),
         ],
       ),
     );
   }
 
-  Widget _bar(String label, double pct, Color color) {
+  Widget _bar(BuildContext context, String label, double pct, Color color) {
     return Row(
       children: [
         SizedBox(
           width: 140,
           child: Text(label,
-              style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+              style: TextStyle(color: context.colors.muted, fontSize: 12)),
         ),
         Expanded(
           child: ClipRRect(
@@ -189,7 +194,7 @@ class ReportsScreen extends StatelessWidget {
             child: LinearProgressIndicator(
               value: pct,
               minHeight: 8,
-              backgroundColor: AppColors.surfaceAlt,
+              backgroundColor: context.colors.surfaceAlt,
               color: color,
             ),
           ),
@@ -199,8 +204,8 @@ class ReportsScreen extends StatelessWidget {
           width: 44,
           child: Text('${(pct * 100).round()}%',
               textAlign: TextAlign.end,
-              style: const TextStyle(
-                color: AppColors.text,
+              style: TextStyle(
+                color: context.colors.text,
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
               )),
@@ -209,20 +214,22 @@ class ReportsScreen extends StatelessWidget {
     );
   }
 
-  Widget _summaryGrid(PeriodReport r) {
+  Widget _summaryGrid(BuildContext context, PeriodReport r) {
     return EliteCard(
       child: Column(
         children: [
-          _row('Total study', '${(r.studyMinutes / 60).toStringAsFixed(1)} h',
+          _row(context, 'Total study',
+              '${(r.studyMinutes / 60).toStringAsFixed(1)} h',
               sub: '${r.studySessions} sessions · ${r.studyDaysHitGoal}/${r.totalDaysInPeriod} on goal'),
-          const Divider(color: AppColors.surfaceAlt, height: 18),
-          _row('Workout', '${r.workoutMinutes} min',
+          Divider(color: context.colors.surfaceAlt, height: 18),
+          _row(context, 'Workout', '${r.workoutMinutes} min',
               sub: '${r.workoutSessions} sessions · ${r.workoutDaysActive}/${r.totalDaysInPeriod} days'),
-          const Divider(color: AppColors.surfaceAlt, height: 18),
-          _row('Prayers completed', '${r.prayerCompletions}',
+          Divider(color: context.colors.surfaceAlt, height: 18),
+          _row(context, 'Prayers completed', '${r.prayerCompletions}',
               sub: '${r.prayerPerfectDays}/${r.totalDaysInPeriod} perfect days'),
-          const Divider(color: AppColors.surfaceAlt, height: 18),
+          Divider(color: context.colors.surfaceAlt, height: 18),
           _row(
+            context,
             'Habits',
             '${r.habitCompletions}/${r.habitOpportunities}',
             sub: '${(r.habitSuccessRate * 100).round()}% success',
@@ -232,7 +239,7 @@ class ReportsScreen extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, String value, {String? sub}) {
+  Widget _row(BuildContext context, String label, String value, {String? sub}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -241,17 +248,17 @@ class ReportsScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label,
-                  style: const TextStyle(
-                      color: AppColors.text, fontWeight: FontWeight.w600)),
+                  style: TextStyle(
+                      color: context.colors.text, fontWeight: FontWeight.w600)),
               if (sub != null)
                 Text(sub,
-                    style: const TextStyle(color: AppColors.muted, fontSize: 11)),
+                    style: TextStyle(color: context.colors.muted, fontSize: 11)),
             ],
           ),
         ),
         Text(value,
-            style: const TextStyle(
-              color: AppColors.accent,
+            style: TextStyle(
+              color: context.colors.accent,
               fontWeight: FontWeight.w800,
               fontSize: 16,
             )),
@@ -259,7 +266,7 @@ class ReportsScreen extends StatelessWidget {
     );
   }
 
-  Widget _weightCard(PeriodReport r) {
+  Widget _weightCard(BuildContext context, PeriodReport r) {
     final change = r.weightChangeKg ?? 0;
     final positive = change >= 0;
     final sign = positive ? '+' : '';
@@ -268,27 +275,27 @@ class ReportsScreen extends StatelessWidget {
         children: [
           Icon(
             positive ? Icons.trending_up : Icons.trending_down,
-            color: positive ? AppColors.warning : AppColors.success,
+            color: positive ? context.colors.warning : context.colors.success,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Weight change',
+                Text('Weight change',
                     style: TextStyle(
-                        color: AppColors.text,
+                        color: context.colors.text,
                         fontWeight: FontWeight.w600)),
                 Text(
                   '${r.weightStartKg!.toStringAsFixed(1)} → ${r.weightEndKg!.toStringAsFixed(1)} kg',
-                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                  style: TextStyle(color: context.colors.muted, fontSize: 12),
                 ),
               ],
             ),
           ),
           Text('$sign${change.toStringAsFixed(1)} kg',
               style: TextStyle(
-                color: positive ? AppColors.warning : AppColors.success,
+                color: positive ? context.colors.warning : context.colors.success,
                 fontWeight: FontWeight.w800,
                 fontSize: 18,
               )),
@@ -297,14 +304,14 @@ class ReportsScreen extends StatelessWidget {
     );
   }
 
-  Widget _habitBreakdownCard(PeriodReport r) {
+  Widget _habitBreakdownCard(BuildContext context, PeriodReport r) {
     return EliteCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Habit breakdown',
+          Text('Habit breakdown',
               style: TextStyle(
-                  color: AppColors.muted, fontWeight: FontWeight.w600)),
+                  color: context.colors.muted, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           ...r.habitBreakdown.map((h) {
             return Padding(
@@ -313,7 +320,7 @@ class ReportsScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(h.habitName,
-                        style: const TextStyle(color: AppColors.text)),
+                        style: TextStyle(color: context.colors.text)),
                   ),
                   SizedBox(
                     width: 100,
@@ -322,8 +329,8 @@ class ReportsScreen extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: h.rate,
                         minHeight: 5,
-                        backgroundColor: AppColors.surfaceAlt,
-                        color: AppColors.success,
+                        backgroundColor: context.colors.surfaceAlt,
+                        color: context.colors.success,
                       ),
                     ),
                   ),
@@ -334,7 +341,7 @@ class ReportsScreen extends StatelessWidget {
                       '${h.completions}/${h.opportunities}',
                       textAlign: TextAlign.end,
                       style:
-                          const TextStyle(color: AppColors.muted, fontSize: 12),
+                          TextStyle(color: context.colors.muted, fontSize: 12),
                     ),
                   ),
                 ],

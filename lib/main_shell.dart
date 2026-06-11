@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'features/dashboard/screens/dashboard_screen.dart';
 import 'features/fitness/screens/fitness_home_screen.dart';
 import 'features/habits/screens/habits_screen.dart';
-import 'features/news/screens/news_screen.dart';
 import 'features/notifications/state/notification_controller.dart';
 import 'features/prayer/screens/prayer_screen.dart';
 import 'features/prayer/state/prayer_controller.dart';
@@ -26,7 +25,6 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     const HabitsScreen(),
     const PrayerScreen(),
     const FitnessHomeScreen(),
-    const NewsScreen(),
   ];
 
   @override
@@ -85,10 +83,6 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
               icon: Icon(Icons.fitness_center_outlined),
               activeIcon: Icon(Icons.fitness_center),
               label: 'Fitness'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.newspaper_outlined),
-              activeIcon: Icon(Icons.newspaper),
-              label: 'News'),
         ],
       ),
     );

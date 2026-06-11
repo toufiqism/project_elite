@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -101,14 +101,14 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Today',
+                Text('Today',
                     style: TextStyle(
-                        color: AppColors.muted, fontWeight: FontWeight.w600)),
+                        color: context.colors.muted, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 6),
                 Text(
                   fc.didWorkoutToday() ? 'Workout done' : 'Plan ready',
-                  style: const TextStyle(
-                    color: AppColors.text,
+                  style: TextStyle(
+                    color: context.colors.text,
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                   ),
@@ -116,16 +116,16 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.local_fire_department,
-                        color: AppColors.warning, size: 16),
+                    Icon(Icons.local_fire_department,
+                        color: context.colors.warning, size: 16),
                     const SizedBox(width: 4),
                     Text('${fc.currentWorkoutStreak()}d streak',
-                        style: const TextStyle(
-                            color: AppColors.muted, fontSize: 12)),
+                        style: TextStyle(
+                            color: context.colors.muted, fontSize: 12)),
                     const SizedBox(width: 12),
                     Text('${fc.sessions.length} total',
-                        style: const TextStyle(
-                            color: AppColors.muted, fontSize: 12)),
+                        style: TextStyle(
+                            color: context.colors.muted, fontSize: 12)),
                   ],
                 ),
               ],
@@ -136,13 +136,13 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(bmi.toStringAsFixed(1),
-                    style: const TextStyle(
-                      color: AppColors.accent,
+                    style: TextStyle(
+                      color: context.colors.accent,
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
                     )),
-                const Text('BMI',
-                    style: TextStyle(color: AppColors.muted, fontSize: 12)),
+                Text('BMI',
+                    style: TextStyle(color: context.colors.muted, fontSize: 12)),
               ],
             ),
         ],
@@ -154,22 +154,22 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
     return EliteCard(
       child: Column(
         children: [
-          const Icon(Icons.vpn_key, color: AppColors.accent, size: 36),
+          Icon(Icons.vpn_key, color: context.colors.accent, size: 36),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'Set up your ExerciseDB API key',
             style: TextStyle(
-              color: AppColors.text,
+              color: context.colors.text,
               fontSize: 17,
               fontWeight: FontWeight.w700,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Fitness uses the ExerciseDB API on RapidAPI to fetch the exercise catalog. '
             'Free tier ~50 requests/day. Paste your key in Settings to start.',
-            style: TextStyle(color: AppColors.muted),
+            style: TextStyle(color: context.colors.muted),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 14),
@@ -190,10 +190,10 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
     return EliteCard(
       child: Column(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.danger, size: 32),
+          Icon(Icons.error_outline, color: context.colors.danger, size: 32),
           const SizedBox(height: 8),
           Text(msg,
-              style: const TextStyle(color: AppColors.muted),
+              style: TextStyle(color: context.colors.muted),
               textAlign: TextAlign.center),
           const SizedBox(height: 12),
           OutlinedButton.icon(
@@ -210,13 +210,13 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
     return EliteCard(
       child: Column(
         children: [
-          const Icon(Icons.inbox, color: AppColors.muted, size: 32),
+          Icon(Icons.inbox, color: context.colors.muted, size: 32),
           const SizedBox(height: 10),
           Text(
             type == 'Walking'
                 ? 'No cardio exercises cached yet.\nPull down to refresh.'
                 : 'No exercises matched today\'s plan.\nPull down to refresh.',
-            style: const TextStyle(color: AppColors.muted),
+            style: TextStyle(color: context.colors.muted),
             textAlign: TextAlign.center,
           ),
         ],
@@ -238,15 +238,15 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
                 children: [
                   Expanded(
                     child: Text(plan.label,
-                        style: const TextStyle(
-                          color: AppColors.text,
+                        style: TextStyle(
+                          color: context.colors.text,
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
                         )),
                   ),
                   Text('${plan.exercises.length} ex · ${formatDuration(est)} · ~${kcal.round()} kcal',
-                      style: const TextStyle(
-                          color: AppColors.muted, fontSize: 12)),
+                      style: TextStyle(
+                          color: context.colors.muted, fontSize: 12)),
                 ],
               ),
               const SizedBox(height: 14),
@@ -275,7 +275,7 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceAlt,
+                      color: context.colors.surfaceAlt,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     clipBehavior: Clip.antiAlias,
@@ -283,13 +283,13 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
                         ? Image.network(
                             pe.exercise.gifUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(
+                            errorBuilder: (_, __, ___) => Icon(
                               Icons.fitness_center,
-                              color: AppColors.muted,
+                              color: context.colors.muted,
                             ),
                           )
-                        : const Icon(Icons.fitness_center,
-                            color: AppColors.muted),
+                        : Icon(Icons.fitness_center,
+                            color: context.colors.muted),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -298,23 +298,23 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
                       children: [
                         Text(
                           _toTitle(pe.exercise.name),
-                          style: const TextStyle(
-                            color: AppColors.text,
+                          style: TextStyle(
+                            color: context.colors.text,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         Text(
                           '${pe.exercise.target} · ${pe.exercise.equipment}',
-                          style: const TextStyle(
-                              color: AppColors.muted, fontSize: 12),
+                          style: TextStyle(
+                              color: context.colors.muted, fontSize: 12),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           pe.holdSeconds != null
                               ? '${pe.sets} × ${pe.holdSeconds}s'
                               : '${pe.sets} × ${pe.reps} reps',
-                          style: const TextStyle(
-                            color: AppColors.accent,
+                          style: TextStyle(
+                            color: context.colors.accent,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -323,8 +323,8 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
                   ),
                   IconButton(
                     tooltip: 'Search on YouTube',
-                    icon: const Icon(Icons.play_circle_outline,
-                        color: AppColors.muted),
+                    icon: Icon(Icons.play_circle_outline,
+                        color: context.colors.muted),
                     onPressed: () => launchUrl(
                       Uri.parse(
                           'https://www.youtube.com/results?search_query=${Uri.encodeComponent("How to do ${pe.exercise.name}")}'),

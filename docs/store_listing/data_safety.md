@@ -107,7 +107,7 @@ Explicitly answer "No" for these categories (Play will ask):
 - Calendar
 - Contacts
 - Web browsing
-- Search history (search queries are sent to NewsAPI / ExerciseDB but not retained by your app — answer per Play definitions: NOT collected)
+- Search history (search queries are sent to ExerciseDB but not retained by your app — answer per Play definitions: NOT collected)
 - Installed apps
 - In-app actions outside of those listed above
 - Other info
@@ -123,11 +123,10 @@ Explicitly answer "No" for these categories (Play will ask):
 | Email, name, photo URL, UID | Firebase Auth + Firestore (your own project) | Sign-in + cloud backup |
 | Location (lat/lng) | AlAdhan API (https://api.aladhan.com) | Prayer times + Qibla |
 | Exercise search terms | RapidAPI ExerciseDB | Exercise lookup |
-| News search terms | NewsAPI | Islamic news feed |
 | YouTube search query | YouTube (system browser) | "How to perform" exercise videos |
 | Crash stack traces | Firebase Crashlytics | Crash diagnostics (release only) |
 
-Firebase = data processor under Google. Play does not count first-party Firebase as "shared with third parties." AlAdhan / NewsAPI / RapidAPI DO count as shared.
+Firebase = data processor under Google. Play does not count first-party Firebase as "shared with third parties." AlAdhan / RapidAPI DO count as shared.
 
 ---
 
@@ -137,7 +136,7 @@ Play will ask you to justify each declared permission. Use these blurbs:
 
 - **ACCESS_FINE_LOCATION / ACCESS_COARSE_LOCATION** → "Used to compute accurate prayer times and Qibla direction. Coordinates are sent only to the AlAdhan prayer-times API."
 - **POST_NOTIFICATIONS** → "Local prayer-time, habit, and study reminders. No push notifications from a server."
-- **SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM** → "Required to fire the prayer adhan at the precise calculated minute. App is functionally a prayer/alarm app per Play's exempt categories."
+- **SCHEDULE_EXACT_ALARM** → "Required to fire the prayer adhan at the precise calculated minute. Runtime-granted; user can revoke in system settings."
 - **RECEIVE_BOOT_COMPLETED** → "Reschedule prayer alarms after the device restarts."
 - **REQUEST_IGNORE_BATTERY_OPTIMIZATIONS** → "Optional. Allows user to opt the app out of OEM battery savers that otherwise suppress prayer-time alarms."
 

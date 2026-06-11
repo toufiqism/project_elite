@@ -15,11 +15,35 @@
       },
       "oauth_client": [
         {
+          "client_id": "345837181763-66juh0pajo4u4uhitm62tj5av4srn4q9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.toufiq.elite.project_elite",
+            "certificate_hash": "60ac54da98b3ab5da1686491ca9e6879b7ef4f01"
+          }
+        },
+        {
           "client_id": "345837181763-h74qs7l4sddskdf0nd1jh0qkktnb7bdm.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.toufiq.elite.project_elite",
             "certificate_hash": "aca35cc76e47c4cca6958cc8ee05a92f440cba11"
+          }
+        },
+        {
+          "client_id": "345837181763-rqi0bgorr474rk7k9u1mobgakavfetl1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.toufiq.elite.project_elite",
+            "certificate_hash": "a586bea4ac7567ef7aab5a22cbdb3d2d0e83d049"
+          }
+        },
+        {
+          "client_id": "345837181763-s98msphun5tjfn8dv77jflnoe8sm19dv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.toufiq.elite.project_elite",
+            "certificate_hash": "34c32eda26b812031fe00547e83a0c59814dd37f"
           }
         },
         {

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
@@ -32,7 +32,7 @@ class TasbihScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              _presetRow(ctrl),
+              _presetRow(context, ctrl),
               const SizedBox(height: 12),
               EliteCard(
                 padding: const EdgeInsets.all(20),
@@ -40,14 +40,14 @@ class TasbihScreen extends StatelessWidget {
                   children: [
                     Text(active.arabic,
                         textDirection: TextDirection.rtl,
-                        style: const TextStyle(
-                          color: AppColors.accent,
+                        style: TextStyle(
+                          color: context.colors.accent,
                           fontSize: 32,
                           fontWeight: FontWeight.w700,
                         )),
                     const SizedBox(height: 4),
                     Text('${active.label}  ·  goal ${active.target}',
-                        style: const TextStyle(color: AppColors.muted)),
+                        style: TextStyle(color: context.colors.muted)),
                   ],
                 ),
               ),
@@ -70,18 +70,18 @@ class TasbihScreen extends StatelessWidget {
                         child: CircularProgressIndicator(
                           value: progress,
                           strokeWidth: 12,
-                          backgroundColor: AppColors.surfaceAlt,
+                          backgroundColor: context.colors.surfaceAlt,
                           color: atTarget
-                              ? AppColors.success
-                              : AppColors.accent,
+                              ? context.colors.success
+                              : context.colors.accent,
                         ),
                       ),
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text('${ctrl.currentCount}',
-                              style: const TextStyle(
-                                color: AppColors.text,
+                              style: TextStyle(
+                                color: context.colors.text,
                                 fontSize: 88,
                                 fontWeight: FontWeight.w900,
                                 fontFeatures: [
@@ -91,8 +91,8 @@ class TasbihScreen extends StatelessWidget {
                           Text(atTarget ? 'Reached' : 'Tap',
                               style: TextStyle(
                                 color: atTarget
-                                    ? AppColors.success
-                                    : AppColors.muted,
+                                    ? context.colors.success
+                                    : context.colors.muted,
                                 fontSize: 14,
                                 letterSpacing: 4,
                                 fontWeight: FontWeight.w700,
@@ -106,12 +106,12 @@ class TasbihScreen extends StatelessWidget {
               const Spacer(),
               Text(
                 'Today across all phrases: ${ctrl.todayTotalAcrossPresets()}',
-                style: const TextStyle(color: AppColors.muted),
+                style: TextStyle(color: context.colors.muted),
               ),
               const SizedBox(height: 4),
               Text(
                 'All-time: ${ctrl.totalAllTime()}',
-                style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                style: TextStyle(color: context.colors.muted, fontSize: 12),
               ),
             ],
           ),
@@ -120,7 +120,7 @@ class TasbihScreen extends StatelessWidget {
     );
   }
 
-  Widget _presetRow(TasbihController ctrl) {
+  Widget _presetRow(BuildContext context, TasbihController ctrl) {
     return Row(
       children: TasbihPresets.all.map((p) {
         final active = p.label == ctrl.activePreset.label;
@@ -130,9 +130,9 @@ class TasbihScreen extends StatelessWidget {
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
                 backgroundColor:
-                    active ? AppColors.accent.withValues(alpha: 0.12) : null,
+                    active ? context.colors.accent.withValues(alpha: 0.12) : null,
                 side: BorderSide(
-                  color: active ? AppColors.accent : AppColors.surfaceAlt,
+                  color: active ? context.colors.accent : context.colors.surfaceAlt,
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 10),
               ),
@@ -140,7 +140,7 @@ class TasbihScreen extends StatelessWidget {
               child: Text(
                 p.label,
                 style: TextStyle(
-                  color: active ? AppColors.accent : AppColors.muted,
+                  color: active ? context.colors.accent : context.colors.muted,
                   fontWeight: FontWeight.w700,
                   fontSize: 12,
                 ),

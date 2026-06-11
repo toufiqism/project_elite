@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -121,7 +121,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.colors.surface,
         title: const Text('End workout?'),
         content: Text(_completed.isEmpty
             ? 'Nothing saved yet. End now?'
@@ -165,8 +165,8 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
               LinearProgressIndicator(
                 value: (_currentIndex + _setsDone / pe.sets) /
                     widget.plan.exercises.length,
-                backgroundColor: AppColors.surfaceAlt,
-                color: AppColors.primary,
+                backgroundColor: context.colors.surfaceAlt,
+                color: context.colors.primary,
                 minHeight: 6,
               ),
               const SizedBox(height: 18),
@@ -183,10 +183,10 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                             pe.exercise.gifUrl,
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Container(
-                              color: AppColors.surfaceAlt,
+                              color: context.colors.surfaceAlt,
                               alignment: Alignment.center,
-                              child: const Icon(Icons.fitness_center,
-                                  size: 48, color: AppColors.muted),
+                              child: Icon(Icons.fitness_center,
+                                  size: 48, color: context.colors.muted),
                             ),
                           ),
                         ),
@@ -201,8 +201,8 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                             children: [
                               Text(
                                 _toTitle(pe.exercise.name),
-                                style: const TextStyle(
-                                  color: AppColors.text,
+                                style: TextStyle(
+                                  color: context.colors.text,
                                   fontSize: 22,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -210,15 +210,15 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 '${pe.exercise.target} · ${pe.exercise.equipment}',
-                                style: const TextStyle(color: AppColors.muted),
+                                style: TextStyle(color: context.colors.muted),
                               ),
                             ],
                           ),
                         ),
                         IconButton(
                           tooltip: 'Search on YouTube',
-                          icon: const Icon(Icons.play_circle_outline,
-                              color: AppColors.muted),
+                          icon: Icon(Icons.play_circle_outline,
+                              color: context.colors.muted),
                           onPressed: () => launchUrl(
                             Uri.parse(
                                 'https://www.youtube.com/results?search_query=${Uri.encodeComponent(pe.exercise.name)}'),
@@ -250,11 +250,11 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text('Set ${_setsDone + 1} of ${pe.sets}',
-            style: const TextStyle(color: AppColors.muted, fontSize: 14)),
+            style: TextStyle(color: context.colors.muted, fontSize: 14)),
         const SizedBox(height: 6),
         Text(target,
-            style: const TextStyle(
-              color: AppColors.text,
+            style: TextStyle(
+              color: context.colors.text,
               fontSize: 48,
               fontWeight: FontWeight.w800,
             )),
@@ -303,7 +303,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text('Rest', style: TextStyle(color: AppColors.muted)),
+        Text('Rest', style: TextStyle(color: context.colors.muted)),
         const SizedBox(height: 6),
         SizedBox(
           width: 180,
@@ -315,13 +315,13 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                 child: CircularProgressIndicator(
                   value: progress,
                   strokeWidth: 8,
-                  backgroundColor: AppColors.surfaceAlt,
-                  color: AppColors.accent,
+                  backgroundColor: context.colors.surfaceAlt,
+                  color: context.colors.accent,
                 ),
               ),
               Text('${_restRemaining}s',
-                  style: const TextStyle(
-                    color: AppColors.text,
+                  style: TextStyle(
+                    color: context.colors.text,
                     fontSize: 40,
                     fontWeight: FontWeight.w800,
                   )),

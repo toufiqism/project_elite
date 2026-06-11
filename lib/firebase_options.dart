@@ -57,7 +57,6 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://project-elite-a2d57-default-rtdb.firebaseio.com',
     storageBucket: 'project-elite-a2d57.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBtkfH9jGa3yGO-j1-x1W7oHPQcK5apPAE',
     appId: '1:345837181763:ios:a3d291188598f331106df6',
@@ -65,9 +64,8 @@ class DefaultFirebaseOptions {
     projectId: 'project-elite-a2d57',
     databaseURL: 'https://project-elite-a2d57-default-rtdb.firebaseio.com',
     storageBucket: 'project-elite-a2d57.firebasestorage.app',
-    androidClientId: '345837181763-h74qs7l4sddskdf0nd1jh0qkktnb7bdm.apps.googleusercontent.com',
+    androidClientId: '345837181763-66juh0pajo4u4uhitm62tj5av4srn4q9.apps.googleusercontent.com',
     iosClientId: '345837181763-2jod7i44h2esabvuqrbcutj397ni0c5o.apps.googleusercontent.com',
     iosBundleId: 'com.toufiq.elite.projectElite',
   );
-
 }

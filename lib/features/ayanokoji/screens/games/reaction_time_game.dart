@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -94,13 +94,13 @@ class _ReactionTimeGameState extends State<ReactionTimeGame> {
   Color _bg() {
     switch (_phase) {
       case _Phase.waiting:
-        return AppColors.danger;
+        return context.colors.danger;
       case _Phase.go:
-        return AppColors.success;
+        return context.colors.success;
       case _Phase.tooEarly:
-        return AppColors.warning;
+        return context.colors.warning;
       default:
-        return AppColors.background;
+        return context.colors.background;
     }
   }
 
@@ -126,7 +126,7 @@ class _ReactionTimeGameState extends State<ReactionTimeGame> {
     final textStyle = TextStyle(
       color: _phase == _Phase.go || _phase == _Phase.waiting
           ? Colors.white
-          : AppColors.text,
+          : context.colors.text,
       fontSize: 28,
       fontWeight: FontWeight.w800,
     );
@@ -135,15 +135,15 @@ class _ReactionTimeGameState extends State<ReactionTimeGame> {
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.bolt, color: AppColors.accent, size: 60),
+            Icon(Icons.bolt, color: context.colors.accent, size: 60),
             const SizedBox(height: 12),
             Text('Tap to start', style: textStyle),
             const SizedBox(height: 6),
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 30),
               child: Text(
                 'When the screen turns green, tap as fast as you can. 5 rounds. Tap too early and the round is voided.',
-                style: TextStyle(color: AppColors.muted),
+                style: TextStyle(color: context.colors.muted),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -159,7 +159,7 @@ class _ReactionTimeGameState extends State<ReactionTimeGame> {
           children: [
             Text('Too early', style: textStyle),
             const SizedBox(height: 6),
-            const Text('Tap to retry', style: TextStyle(color: AppColors.muted)),
+            Text('Tap to retry', style: TextStyle(color: context.colors.muted)),
           ],
         );
       case _Phase.result:
@@ -169,7 +169,7 @@ class _ReactionTimeGameState extends State<ReactionTimeGame> {
             Text('${_lastMs ?? 0} ms', style: textStyle),
             const SizedBox(height: 6),
             Text('${_round}/$_totalRounds rounds — tap to continue',
-                style: const TextStyle(color: AppColors.muted)),
+                style: TextStyle(color: context.colors.muted)),
           ],
         );
       case _Phase.finished:
@@ -179,11 +179,11 @@ class _ReactionTimeGameState extends State<ReactionTimeGame> {
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.bolt, color: AppColors.accent, size: 60),
+            Icon(Icons.bolt, color: context.colors.accent, size: 60),
             const SizedBox(height: 12),
             Text('Average: $avg ms', style: textStyle),
             const SizedBox(height: 6),
-            const Text('Tap to exit', style: TextStyle(color: AppColors.muted)),
+            Text('Tap to exit', style: TextStyle(color: context.colors.muted)),
           ],
         );
     }

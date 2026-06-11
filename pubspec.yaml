@@ -2,7 +2,7 @@ name: project_elite
 description: "Project Elite — a self-improvement app for discipline, study, fitness, prayer, and habit mastery."
 publish_to: 'none'
 
-version: 1.0.0+1  # semver+versionCode. Bump +N every Play upload; bump x.y.z on user-facing releases.
+version: 1.0.0+10  # semver+versionCode. Bump +N every Play upload; bump x.y.z on user-facing releases.
 
 environment:
   sdk: ^3.11.5
@@ -59,9 +59,11 @@ dependencies:
   # Open URLs (YouTube search for exercises)
   url_launcher: ^6.3.0
 
-  # News feature
-  webview_flutter: ^4.8.0
+  # Reverse-geocoding for prayer location auto-detect
   geocoding: ^3.0.0
+
+  # Native splash (preserve/remove API used in main.dart)
+  flutter_native_splash: ^2.4.1
 
 dev_dependencies:
   flutter_test:

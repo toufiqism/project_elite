@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -44,13 +44,13 @@ class _HabitsScreenState extends State<HabitsScreen> {
               children: [
                 Row(
                   children: [
-                    const Text('Today',
+                    Text('Today',
                         style: TextStyle(
-                            color: AppColors.muted,
+                            color: context.colors.muted,
                             fontWeight: FontWeight.w600)),
                     const Spacer(),
                     Text('$completed / ${habits.length}',
-                        style: const TextStyle(color: AppColors.muted)),
+                        style: TextStyle(color: context.colors.muted)),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -59,8 +59,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
                   child: LinearProgressIndicator(
                     value: pct,
                     minHeight: 10,
-                    backgroundColor: AppColors.surfaceAlt,
-                    color: pct >= 1 ? AppColors.success : AppColors.accent,
+                    backgroundColor: context.colors.surfaceAlt,
+                    color: pct >= 1 ? context.colors.success : context.colors.accent,
                   ),
                 ),
               ],
@@ -92,13 +92,13 @@ class _HabitsScreenState extends State<HabitsScreen> {
               height: 40,
               decoration: BoxDecoration(
                 color: done
-                    ? AppColors.success.withValues(alpha: 0.2)
-                    : AppColors.surfaceAlt,
+                    ? context.colors.success.withValues(alpha: 0.2)
+                    : context.colors.surfaceAlt,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 _icon(h.icon),
-                color: done ? AppColors.success : AppColors.muted,
+                color: done ? context.colors.success : context.colors.muted,
                 size: 22,
               ),
             ),
@@ -109,25 +109,25 @@ class _HabitsScreenState extends State<HabitsScreen> {
                 children: [
                   Text(h.name,
                       style: TextStyle(
-                        color: AppColors.text,
+                        color: context.colors.text,
                         fontWeight: FontWeight.w600,
                         decoration:
                             done ? TextDecoration.lineThrough : null,
                       )),
                   Row(
                     children: [
-                      const Icon(Icons.local_fire_department,
-                          size: 14, color: AppColors.accent),
+                      Icon(Icons.local_fire_department,
+                          size: 14, color: context.colors.accent),
                       const SizedBox(width: 4),
                       Text('$streak day streak',
-                          style: const TextStyle(
-                              color: AppColors.muted, fontSize: 12)),
+                          style: TextStyle(
+                              color: context.colors.muted, fontSize: 12)),
                       const SizedBox(width: 12),
                       Flexible(
                         child: Text(
                           '${(ctrl.monthSuccessRate(h.id) * 100).toStringAsFixed(0)}% this month',
-                          style: const TextStyle(
-                              color: AppColors.muted, fontSize: 12),
+                          style: TextStyle(
+                              color: context.colors.muted, fontSize: 12),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -139,11 +139,11 @@ class _HabitsScreenState extends State<HabitsScreen> {
             Checkbox(
               value: done,
               onChanged: (_) => ctrl.toggle(h.id, today),
-              activeColor: AppColors.success,
+              activeColor: context.colors.success,
               shape: const CircleBorder(),
             ),
             IconButton(
-              icon: const Icon(Icons.more_vert, color: AppColors.muted),
+              icon: Icon(Icons.more_vert, color: context.colors.muted),
               onPressed: () => _showHabitMenu(context, ctrl, h),
             ),
           ],
@@ -155,13 +155,13 @@ class _HabitsScreenState extends State<HabitsScreen> {
   void _showHabitMenu(BuildContext context, HabitController ctrl, Habit h) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.colors.surface,
       builder: (_) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.delete_outline, color: AppColors.danger),
+              leading: Icon(Icons.delete_outline, color: context.colors.danger),
               title: const Text('Delete habit'),
               onTap: () {
                 Navigator.pop(context);
@@ -190,14 +190,14 @@ class _HabitsScreenState extends State<HabitsScreen> {
                 onPressed: () => setState(() {
                   _focusMonth = DateTime(year, month - 1);
                 }),
-                icon: const Icon(Icons.chevron_left, color: AppColors.muted),
+                icon: Icon(Icons.chevron_left, color: context.colors.muted),
               ),
               Expanded(
                 child: Center(
                   child: Text(
                     '${_monthName(month)} $year',
-                    style: const TextStyle(
-                      color: AppColors.text,
+                    style: TextStyle(
+                      color: context.colors.text,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -207,7 +207,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                 onPressed: () => setState(() {
                   _focusMonth = DateTime(year, month + 1);
                 }),
-                icon: const Icon(Icons.chevron_right, color: AppColors.muted),
+                icon: Icon(Icons.chevron_right, color: context.colors.muted),
               ),
             ],
           ),
@@ -216,8 +216,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
                 .map((d) => Expanded(
                       child: Center(
                         child: Text(d,
-                            style: const TextStyle(
-                                color: AppColors.muted, fontSize: 12)),
+                            style: TextStyle(
+                                color: context.colors.muted, fontSize: 12)),
                       ),
                     ))
                 .toList(),
@@ -247,8 +247,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
   Widget _dayCell(int day, double pct, bool active) {
     final color = !active
-        ? AppColors.surfaceAlt
-        : Color.lerp(AppColors.surfaceAlt, AppColors.success, pct)!;
+        ? context.colors.surfaceAlt
+        : Color.lerp(context.colors.surfaceAlt, context.colors.success, pct)!;
     return Padding(
       padding: const EdgeInsets.all(3),
       child: Container(
@@ -259,7 +259,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
         alignment: Alignment.center,
         child: Text('$day',
             style: TextStyle(
-              color: pct > 0.5 ? Colors.black : AppColors.text,
+              color: pct > 0.5 ? Colors.black : context.colors.text,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             )),
@@ -308,7 +308,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
       context: context,
       builder: (dctx) => StatefulBuilder(
         builder: (dctx, setLocal) => AlertDialog(
-          backgroundColor: AppColors.surface,
+          backgroundColor: context.colors.surface,
           title: const Text('New habit'),
           content: Column(
             mainAxisSize: MainAxisSize.min,

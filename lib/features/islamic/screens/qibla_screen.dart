@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -98,28 +98,28 @@ class _QiblaScreenState extends State<QiblaScreen> {
                 EliteCard(
                   child: Row(
                     children: [
-                      const Icon(Icons.warning_amber,
-                          color: AppColors.warning),
+                      Icon(Icons.warning_amber,
+                          color: context.colors.warning),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(_error!,
-                            style: const TextStyle(color: AppColors.muted)),
+                            style: TextStyle(color: context.colors.muted)),
                       ),
                     ],
                   ),
                 )
               else if (_heading == null)
-                const EliteCard(
+                EliteCard(
                   child: Text(
                     'Compass not available on this device.',
-                    style: TextStyle(color: AppColors.muted),
+                    style: TextStyle(color: context.colors.muted),
                   ),
                 )
               else if (_qiblaBearing == null)
-                const EliteCard(
+                EliteCard(
                   child: Text(
                     'Computing Qibla direction…',
-                    style: TextStyle(color: AppColors.muted),
+                    style: TextStyle(color: context.colors.muted),
                   ),
                 ),
               const Spacer(),
@@ -130,21 +130,21 @@ class _QiblaScreenState extends State<QiblaScreen> {
                 Text(
                   'Bearing to Mecca: ${_qiblaBearing!.toStringAsFixed(1)}°',
                   style:
-                      const TextStyle(color: AppColors.text, fontSize: 16),
+                      TextStyle(color: context.colors.text, fontSize: 16),
                 ),
                 const SizedBox(height: 4),
                 if (_heading != null)
                   Text(
                     'Heading: ${_heading!.toStringAsFixed(1)}°',
                     style:
-                        const TextStyle(color: AppColors.muted, fontSize: 12),
+                        TextStyle(color: context.colors.muted, fontSize: 12),
                   ),
               ],
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 'Hold the phone flat. If the arrow wobbles, move it in a figure-8 to calibrate the magnetometer.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.muted, fontSize: 12),
+                style: TextStyle(color: context.colors.muted, fontSize: 12),
               ),
             ],
           ),
@@ -166,8 +166,8 @@ class _QiblaScreenState extends State<QiblaScreen> {
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.surfaceAlt, width: 2),
-              color: AppColors.surface,
+              border: Border.all(color: context.colors.surfaceAlt, width: 2),
+              color: context.colors.surface,
             ),
           ),
           // Cardinal markers — rotate with negative heading so N stays at top
@@ -180,28 +180,28 @@ class _QiblaScreenState extends State<QiblaScreen> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  const Positioned(
+                  Positioned(
                     top: 10,
                     child: Text('N',
                         style: TextStyle(
-                          color: AppColors.muted,
+                          color: context.colors.muted,
                           fontWeight: FontWeight.w800,
                         )),
                   ),
-                  const Positioned(
+                  Positioned(
                     bottom: 10,
                     child: Text('S',
-                        style: TextStyle(color: AppColors.muted)),
+                        style: TextStyle(color: context.colors.muted)),
                   ),
-                  const Positioned(
+                  Positioned(
                     left: 10,
                     child: Text('W',
-                        style: TextStyle(color: AppColors.muted)),
+                        style: TextStyle(color: context.colors.muted)),
                   ),
-                  const Positioned(
+                  Positioned(
                     right: 10,
                     child: Text('E',
-                        style: TextStyle(color: AppColors.muted)),
+                        style: TextStyle(color: context.colors.muted)),
                   ),
                   // Qibla arrow
                   Transform.rotate(
@@ -215,16 +215,16 @@ class _QiblaScreenState extends State<QiblaScreen> {
                           Icon(
                             Icons.location_on,
                             color: aligned
-                                ? AppColors.success
-                                : AppColors.accent,
+                                ? context.colors.success
+                                : context.colors.accent,
                             size: 32,
                           ),
                           Container(
                             width: 4,
                             height: 80,
                             color: aligned
-                                ? AppColors.success
-                                : AppColors.accent,
+                                ? context.colors.success
+                                : context.colors.accent,
                           ),
                         ],
                       ),
@@ -237,8 +237,8 @@ class _QiblaScreenState extends State<QiblaScreen> {
           Container(
             width: 18,
             height: 18,
-            decoration: const BoxDecoration(
-              color: AppColors.text,
+            decoration: BoxDecoration(
+              color: context.colors.text,
               shape: BoxShape.circle,
             ),
           ),

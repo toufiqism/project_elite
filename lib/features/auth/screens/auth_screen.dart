@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -65,10 +65,10 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 40),
                   Text(
                     _register ? 'Create account' : 'Welcome back',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.text,
+                      color: context.colors.text,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -78,7 +78,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         ? 'Start your elite journey'
                         : 'Sign in to continue',
                     style:
-                        const TextStyle(fontSize: 14, color: AppColors.muted),
+                        TextStyle(fontSize: 14, color: context.colors.muted),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
@@ -93,18 +93,18 @@ class _AuthScreenState extends State<AuthScreen> {
                   // ── "or" divider ───────────────────────────────────────
                   Row(
                     children: [
-                      const Expanded(child: Divider(color: AppColors.surfaceAlt)),
+                      Expanded(child: Divider(color: context.colors.surfaceAlt)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
                           'or',
                           style: TextStyle(
-                            color: AppColors.muted,
+                            color: context.colors.muted,
                             fontSize: 13,
                           ),
                         ),
                       ),
-                      const Expanded(child: Divider(color: AppColors.surfaceAlt)),
+                      Expanded(child: Divider(color: context.colors.surfaceAlt)),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -115,10 +115,10 @@ class _AuthScreenState extends State<AuthScreen> {
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     autocorrect: false,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Email',
                       prefixIcon: Icon(Icons.email_outlined,
-                          color: AppColors.muted, size: 20),
+                          color: context.colors.muted, size: 20),
                     ),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
@@ -138,14 +138,14 @@ class _AuthScreenState extends State<AuthScreen> {
                     onFieldSubmitted: (_) => _submitEmailPassword(),
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline,
-                          color: AppColors.muted, size: 20),
+                      prefixIcon: Icon(Icons.lock_outline,
+                          color: context.colors.muted, size: 20),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscure
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
-                          color: AppColors.muted,
+                          color: context.colors.muted,
                           size: 20,
                         ),
                         onPressed: () => setState(() => _obscure = !_obscure),
@@ -167,19 +167,19 @@ class _AuthScreenState extends State<AuthScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
-                        color: AppColors.danger.withValues(alpha: 0.12),
+                        color: context.colors.danger.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline,
-                              color: AppColors.danger, size: 18),
+                          Icon(Icons.error_outline,
+                              color: context.colors.danger, size: 18),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               auth.error!,
-                              style: const TextStyle(
-                                  color: AppColors.danger, fontSize: 13),
+                              style: TextStyle(
+                                  color: context.colors.danger, fontSize: 13),
                             ),
                           ),
                         ],
@@ -194,12 +194,12 @@ class _AuthScreenState extends State<AuthScreen> {
                     child: ElevatedButton(
                       onPressed: auth.isLoading ? null : _submitEmailPassword,
                       child: auth.isLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 22,
                               height: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
-                                color: AppColors.background,
+                                color: context.colors.background,
                               ),
                             )
                           : Text(
@@ -218,20 +218,20 @@ class _AuthScreenState extends State<AuthScreen> {
                         onTap: () => showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
-                          backgroundColor: AppColors.surface,
+                          backgroundColor: context.colors.surface,
                           shape: const RoundedRectangleBorder(
                             borderRadius: BorderRadius.vertical(
                                 top: Radius.circular(20)),
                           ),
                           builder: (_) => const _ForgotPasswordSheet(),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Forgot password?',
                           style: TextStyle(
-                            color: AppColors.muted,
+                            color: context.colors.muted,
                             fontSize: 14,
                             decoration: TextDecoration.underline,
-                            decorationColor: AppColors.muted,
+                            decorationColor: context.colors.muted,
                           ),
                         ),
                       ),
@@ -247,15 +247,15 @@ class _AuthScreenState extends State<AuthScreen> {
                         _register
                             ? 'Already have an account? '
                             : "Don't have an account? ",
-                        style: const TextStyle(
-                            color: AppColors.muted, fontSize: 14),
+                        style: TextStyle(
+                            color: context.colors.muted, fontSize: 14),
                       ),
                       GestureDetector(
                         onTap: _toggle,
                         child: Text(
                           _register ? 'Sign in' : 'Register',
-                          style: const TextStyle(
-                            color: AppColors.primary,
+                          style: TextStyle(
+                            color: context.colors.primary,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
@@ -357,18 +357,18 @@ class _FormView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Reset password',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: AppColors.text,
+              color: context.colors.text,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Enter the email address linked to your account and we\'ll send you a reset link.',
-            style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.5),
+            style: TextStyle(color: context.colors.muted, fontSize: 13, height: 1.5),
           ),
           const SizedBox(height: 24),
           TextFormField(
@@ -377,10 +377,10 @@ class _FormView extends StatelessWidget {
             textInputAction: TextInputAction.done,
             autofocus: true,
             onFieldSubmitted: (_) => onSubmit(),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Email',
               prefixIcon:
-                  Icon(Icons.email_outlined, color: AppColors.muted, size: 20),
+                  Icon(Icons.email_outlined, color: context.colors.muted, size: 20),
             ),
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'Enter your email';
@@ -396,18 +396,18 @@ class _FormView extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.danger.withValues(alpha: 0.12),
+                color: context.colors.danger.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline,
-                      color: AppColors.danger, size: 18),
+                  Icon(Icons.error_outline,
+                      color: context.colors.danger, size: 18),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(error!,
-                        style: const TextStyle(
-                            color: AppColors.danger, fontSize: 13)),
+                        style: TextStyle(
+                            color: context.colors.danger, fontSize: 13)),
                   ),
                 ],
               ),
@@ -419,11 +419,11 @@ class _FormView extends StatelessWidget {
             child: ElevatedButton(
               onPressed: loading ? null : onSubmit,
               child: loading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2.5, color: AppColors.background),
+                          strokeWidth: 2.5, color: context.colors.background),
                     )
                   : const Text('Send reset link',
                       style: TextStyle(
@@ -447,26 +447,26 @@ class _ConfirmationView extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Center(
+        Center(
           child: Icon(Icons.mark_email_read_outlined,
-              color: AppColors.success, size: 52),
+              color: context.colors.success, size: 52),
         ),
         const SizedBox(height: 20),
-        const Text(
+        Text(
           'Check your inbox',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: AppColors.text,
+            color: context.colors.text,
           ),
         ),
         const SizedBox(height: 10),
         Text(
           'A password reset link has been sent to\n$email',
           textAlign: TextAlign.center,
-          style: const TextStyle(
-              color: AppColors.muted, fontSize: 13, height: 1.6),
+          style: TextStyle(
+              color: context.colors.muted, fontSize: 13, height: 1.6),
         ),
         const SizedBox(height: 28),
         SizedBox(
@@ -498,20 +498,20 @@ class _GoogleButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: loading ? null : onTap,
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.surfaceAlt, width: 1.5),
+          side: BorderSide(color: context.colors.surfaceAlt, width: 1.5),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          backgroundColor: AppColors.surfaceAlt,
+          backgroundColor: context.colors.surfaceAlt,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _GoogleIcon(),
             const SizedBox(width: 12),
-            const Text(
+            Text(
               'Continue with Google',
               style: TextStyle(
-                color: AppColors.text,
+                color: context.colors.text,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
               ),
@@ -601,16 +601,16 @@ class _Logo extends StatelessWidget {
           width: 72,
           height: 72,
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.12),
+            color: context.colors.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Icon(Icons.bolt, color: AppColors.primary, size: 40),
+          child: Icon(Icons.bolt, color: context.colors.primary, size: 40),
         ),
         const SizedBox(height: 14),
-        const Text(
+        Text(
           'PROJECT ELITE',
           style: TextStyle(
-            color: AppColors.primary,
+            color: context.colors.primary,
             fontSize: 13,
             fontWeight: FontWeight.w800,
             letterSpacing: 3,

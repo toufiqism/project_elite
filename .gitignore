@@ -46,3 +46,9 @@ app.*.map.json
 
 # Local API keys — never commit. See api_keys.example.dart for the shape.
 lib/core/config/api_keys.dart
+
+# Android release signing — never commit. See android/key.properties.example.
+android/key.properties
+android/upload-keystore.jks
+android/*.jks
+android/*.keystore

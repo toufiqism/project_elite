@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/ca_subjects.dart';
@@ -65,11 +65,11 @@ class ProfileScreen extends StatelessWidget {
                         children: [
                           CircleAvatar(
                             radius: 28,
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: context.colors.primary,
                             child: Text(
                               p.name.isEmpty ? '?' : p.name[0].toUpperCase(),
-                              style: const TextStyle(
-                                color: AppColors.background,
+                              style: TextStyle(
+                                color: context.colors.background,
                                 fontSize: 24,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -81,8 +81,8 @@ class ProfileScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(p.name,
-                                    style: const TextStyle(
-                                      color: AppColors.text,
+                                    style: TextStyle(
+                                      color: context.colors.text,
                                       fontSize: 20,
                                       fontWeight: FontWeight.w700,
                                     )),
@@ -90,7 +90,7 @@ class ProfileScreen extends StatelessWidget {
                                   p.studyMode == StudyMode.ca
                                       ? '${p.caLevel} · ${p.occupation}'
                                       : p.occupation,
-                                  style: const TextStyle(color: AppColors.muted),
+                                  style: TextStyle(color: context.colors.muted),
                                 ),
                               ],
                             ),
@@ -100,32 +100,32 @@ class ProfileScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          const Text('Subjects',
+                          Text('Subjects',
                               style: TextStyle(
-                                color: AppColors.muted,
+                                color: context.colors.muted,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
                               )),
                           const Spacer(),
                           GestureDetector(
                             onTap: () => _showEditSubjectsSheet(context),
-                            child: const Icon(Icons.edit_outlined,
-                                size: 18, color: AppColors.muted),
+                            child: Icon(Icons.edit_outlined,
+                                size: 18, color: context.colors.muted),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
                       p.caSubjects.isEmpty
-                          ? const Text('No subjects yet.',
+                          ? Text('No subjects yet.',
                               style: TextStyle(
-                                  color: AppColors.muted, fontSize: 13))
+                                  color: context.colors.muted, fontSize: 13))
                           : Wrap(
                               spacing: 8,
                               runSpacing: 8,
                               children: p.caSubjects
                                   .map((s) => Chip(
                                         label: Text(s),
-                                        backgroundColor: AppColors.surfaceAlt,
+                                        backgroundColor: context.colors.surfaceAlt,
                                       ))
                                   .toList(),
                             ),
@@ -137,14 +137,14 @@ class ProfileScreen extends StatelessWidget {
                 EliteCard(
                   child: Column(
                     children: [
-                      _row('Age', '${p.age}'),
-                      _row('Gender', p.gender),
-                      _row('Height', '${p.heightCm.toStringAsFixed(0)} cm'),
-                      _row('Weight', '${p.weightKg.toStringAsFixed(1)} kg'),
-                      _row('Goal', '${p.goalWeightKg.toStringAsFixed(1)} kg'),
-                      _row('BMI', p.bmi.toStringAsFixed(1)),
-                      _row('Fitness', p.fitnessLevel),
-                      _row('Workout style', p.preferredWorkoutType),
+                      _row(context, 'Age', '${p.age}'),
+                      _row(context, 'Gender', p.gender),
+                      _row(context, 'Height', '${p.heightCm.toStringAsFixed(0)} cm'),
+                      _row(context, 'Weight', '${p.weightKg.toStringAsFixed(1)} kg'),
+                      _row(context, 'Goal', '${p.goalWeightKg.toStringAsFixed(1)} kg'),
+                      _row(context, 'BMI', p.bmi.toStringAsFixed(1)),
+                      _row(context, 'Fitness', p.fitnessLevel),
+                      _row(context, 'Workout style', p.preferredWorkoutType),
                     ],
                   ),
                 ),
@@ -153,26 +153,26 @@ class ProfileScreen extends StatelessWidget {
                 EliteCard(
                   child: Column(
                     children: [
-                      _row('Free time', '${p.dailyFreeHours} h/day'),
-                      _row('Sleep', p.sleepSchedule),
-                      _row('Study goal', '${p.studyGoalHoursPerDay} h/day'),
-                      _row('Workout goal', '${p.workoutGoalMinutesPerDay} min'),
-                      _row('Water goal', '${p.waterGoalLiters} L'),
-                      _row('Stress', '${p.stressLevel}/5'),
-                      _row('Prayer reminders', p.prayerRemindersOn ? 'On' : 'Off'),
+                      _row(context, 'Free time', '${p.dailyFreeHours} h/day'),
+                      _row(context, 'Sleep', p.sleepSchedule),
+                      _row(context, 'Study goal', '${p.studyGoalHoursPerDay} h/day'),
+                      _row(context, 'Workout goal', '${p.workoutGoalMinutesPerDay} min'),
+                      _row(context, 'Water goal', '${p.waterGoalLiters} L'),
+                      _row(context, 'Stress', '${p.stressLevel}/5'),
+                      _row(context, 'Prayer reminders', p.prayerRemindersOn ? 'On' : 'Off'),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
                 OutlinedButton.icon(
-                  icon: const Icon(Icons.refresh, color: AppColors.danger),
-                  label: const Text('Reset profile',
-                      style: TextStyle(color: AppColors.danger)),
+                  icon: Icon(Icons.refresh, color: context.colors.danger),
+                  label: Text('Reset profile',
+                      style: TextStyle(color: context.colors.danger)),
                   onPressed: () async {
                     final ok = await showDialog<bool>(
                       context: context,
                       builder: (_) => AlertDialog(
-                        backgroundColor: AppColors.surface,
+                        backgroundColor: context.colors.surface,
                         title: const Text('Reset profile?'),
                         content: const Text(
                             'This will return you to onboarding. Study, habits, and prayer history are kept.'),
@@ -202,7 +202,7 @@ class ProfileScreen extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.colors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -210,17 +210,17 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, String value) {
+  Widget _row(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
           Expanded(
-            child: Text(label, style: const TextStyle(color: AppColors.muted)),
+            child: Text(label, style: TextStyle(color: context.colors.muted)),
           ),
           Text(value,
-              style: const TextStyle(
-                color: AppColors.text,
+              style: TextStyle(
+                color: context.colors.text,
                 fontWeight: FontWeight.w600,
               )),
         ],
@@ -295,15 +295,15 @@ class _EditSubjectsSheetState extends State<_EditSubjectsSheet> {
           children: [
             Row(
               children: [
-                const Text('Edit subjects',
+                Text('Edit subjects',
                     style: TextStyle(
-                      color: AppColors.text,
+                      color: context.colors.text,
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                     )),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.close, color: AppColors.muted),
+                  icon: Icon(Icons.close, color: context.colors.muted),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -326,7 +326,7 @@ class _EditSubjectsSheetState extends State<_EditSubjectsSheet> {
                 initialValue: _caLevel,
                 decoration:
                     const InputDecoration(labelText: 'CA Level'),
-                dropdownColor: AppColors.surfaceAlt,
+                dropdownColor: context.colors.surfaceAlt,
                 items: CALevel.all
                     .map((o) =>
                         DropdownMenuItem(value: o, child: Text(o)))
@@ -341,8 +341,8 @@ class _EditSubjectsSheetState extends State<_EditSubjectsSheet> {
                 },
               ),
               const SizedBox(height: 16),
-              const Text('Pick subjects',
-                  style: TextStyle(color: AppColors.muted)),
+              Text('Pick subjects',
+                  style: TextStyle(color: context.colors.muted)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -359,18 +359,18 @@ class _EditSubjectsSheetState extends State<_EditSubjectsSheet> {
                         _subjects.remove(s);
                       }
                     }),
-                    backgroundColor: AppColors.surface,
+                    backgroundColor: context.colors.surface,
                     selectedColor:
-                        AppColors.primary.withValues(alpha: 0.2),
-                    checkmarkColor: AppColors.primary,
+                        context.colors.primary.withValues(alpha: 0.2),
+                    checkmarkColor: context.colors.primary,
                     labelStyle: TextStyle(
-                      color: selected ? AppColors.primary : AppColors.text,
+                      color: selected ? context.colors.primary : context.colors.text,
                     ),
                     shape: StadiumBorder(
                       side: BorderSide(
                         color: selected
-                            ? AppColors.primary
-                            : AppColors.surfaceAlt,
+                            ? context.colors.primary
+                            : context.colors.surfaceAlt,
                       ),
                     ),
                   );
@@ -382,7 +382,7 @@ class _EditSubjectsSheetState extends State<_EditSubjectsSheet> {
               _studyMode == StudyMode.ca
                   ? 'Add a custom subject / chapter'
                   : 'Add your subjects',
-              style: const TextStyle(color: AppColors.muted),
+              style: TextStyle(color: context.colors.muted),
             ),
             const SizedBox(height: 8),
             Row(children: [
@@ -405,8 +405,8 @@ class _EditSubjectsSheetState extends State<_EditSubjectsSheet> {
             ]),
             if (_subjects.isNotEmpty) ...[
               const SizedBox(height: 16),
-              const Text('Selected',
-                  style: TextStyle(color: AppColors.muted)),
+              Text('Selected',
+                  style: TextStyle(color: context.colors.muted)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -416,7 +416,7 @@ class _EditSubjectsSheetState extends State<_EditSubjectsSheet> {
                     label: Text(s),
                     onDeleted: () =>
                         setState(() => _subjects.remove(s)),
-                    backgroundColor: AppColors.surfaceAlt,
+                    backgroundColor: context.colors.surfaceAlt,
                   );
                 }).toList(),
               ),

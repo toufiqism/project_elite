@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -26,14 +26,19 @@ class CharacterStatsScreen extends StatelessWidget {
             child: SizedBox(
               height: 280,
               child: CustomPaint(
-                painter: _RadarPainter(stats),
+                painter: _RadarPainter(
+                  stats,
+                  gridColor: context.colors.surfaceAlt,
+                  accentColor: context.colors.accent,
+                  mutedColor: context.colors.muted,
+                ),
                 child: const SizedBox.expand(),
               ),
             ),
           ),
           const SizedBox(height: 20),
           const SectionHeader(title: 'Detail'),
-          ...stats.map(_statRow),
+          ...stats.map((sv) => _statRow(context, sv)),
           const SizedBox(height: 24),
           _socialCard(context, ctrl),
         ],
@@ -41,7 +46,7 @@ class CharacterStatsScreen extends StatelessWidget {
     );
   }
 
-  Widget _statRow(StatValue sv) {
+  Widget _statRow(BuildContext context, StatValue sv) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: EliteCard(
@@ -51,14 +56,14 @@ class CharacterStatsScreen extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.15),
+                color: context.colors.accent.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.accent),
+                border: Border.all(color: context.colors.accent),
               ),
               alignment: Alignment.center,
               child: Text('${sv.level}',
-                  style: const TextStyle(
-                    color: AppColors.accent,
+                  style: TextStyle(
+                    color: context.colors.accent,
                     fontWeight: FontWeight.w800,
                   )),
             ),
@@ -68,22 +73,22 @@ class CharacterStatsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(sv.stat.label,
-                      style: const TextStyle(
-                        color: AppColors.text,
+                      style: TextStyle(
+                        color: context.colors.text,
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                       )),
                   Text(sv.stat.sourceHint,
-                      style: const TextStyle(
-                          color: AppColors.muted, fontSize: 11)),
+                      style: TextStyle(
+                          color: context.colors.muted, fontSize: 11)),
                   const SizedBox(height: 6),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
                       value: sv.progress,
                       minHeight: 5,
-                      backgroundColor: AppColors.surfaceAlt,
-                      color: AppColors.accent,
+                      backgroundColor: context.colors.surfaceAlt,
+                      color: context.colors.accent,
                     ),
                   ),
                 ],
@@ -91,8 +96,8 @@ class CharacterStatsScreen extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text('${sv.xp}',
-                style: const TextStyle(
-                    color: AppColors.text, fontWeight: FontWeight.w700)),
+                style: TextStyle(
+                    color: context.colors.text, fontWeight: FontWeight.w700)),
           ],
         ),
       ),
@@ -105,15 +110,15 @@ class CharacterStatsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Social confidence — today',
+          Text('Social confidence — today',
               style: TextStyle(
-                  color: AppColors.muted, fontWeight: FontWeight.w600)),
+                  color: context.colors.muted, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Text(
             today == null
                 ? 'Not rated yet — slide to log it.'
                 : 'Rated $today/5',
-            style: const TextStyle(color: AppColors.text),
+            style: TextStyle(color: context.colors.text),
           ),
           Slider(
             value: (today ?? 3).toDouble(),
@@ -121,7 +126,7 @@ class CharacterStatsScreen extends StatelessWidget {
             max: 5,
             divisions: 4,
             label: '${today ?? 3}',
-            activeColor: AppColors.accent,
+            activeColor: context.colors.accent,
             onChanged: (v) => ctrl.setSocialRatingToday(v.round()),
           ),
         ],
@@ -132,7 +137,15 @@ class CharacterStatsScreen extends StatelessWidget {
 
 class _RadarPainter extends CustomPainter {
   final List<StatValue> stats;
-  _RadarPainter(this.stats);
+  final Color gridColor;
+  final Color accentColor;
+  final Color mutedColor;
+  _RadarPainter(
+    this.stats, {
+    required this.gridColor,
+    required this.accentColor,
+    required this.mutedColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -140,21 +153,21 @@ class _RadarPainter extends CustomPainter {
     final radius = math.min(size.width, size.height) / 2 - 36;
 
     final gridPaint = Paint()
-      ..color = AppColors.surfaceAlt
+      ..color = gridColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
     final axisPaint = Paint()
-      ..color = AppColors.surfaceAlt
+      ..color = gridColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
     final fillPaint = Paint()
-      ..color = AppColors.accent.withValues(alpha: 0.25)
+      ..color = accentColor.withValues(alpha: 0.25)
       ..style = PaintingStyle.fill;
 
     final strokePaint = Paint()
-      ..color = AppColors.accent
+      ..color = accentColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 
@@ -186,8 +199,8 @@ class _RadarPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: stats[i].stat.code,
-          style: const TextStyle(
-            color: AppColors.muted,
+          style: TextStyle(
+            color: mutedColor,
             fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
@@ -225,14 +238,17 @@ class _RadarPainter extends CustomPainter {
       canvas.drawCircle(
         p,
         4,
-        Paint()..color = AppColors.accent,
+        Paint()..color = accentColor,
       );
     }
   }
 
   @override
   bool shouldRepaint(covariant _RadarPainter old) =>
-      !_listEq(old.stats, stats);
+      !_listEq(old.stats, stats) ||
+      old.accentColor != accentColor ||
+      old.gridColor != gridColor ||
+      old.mutedColor != mutedColor;
 
   bool _listEq(List<StatValue> a, List<StatValue> b) {
     if (a.length != b.length) return false;

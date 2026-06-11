@@ -33,7 +33,7 @@ We also store from sign-in:
 ### 1.3 Device permissions
 - **Location** (`ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION`) — used only to compute prayer times and Qibla direction. Coordinates are stored locally; they are sent only to the AlAdhan prayer-times API (see §2). Never sold or shared.
 - **Notifications** (`POST_NOTIFICATIONS`) — local prayer-time and habit reminders. No push notifications from our servers.
-- **Exact alarms** (`SCHEDULE_EXACT_ALARM`, `USE_EXACT_ALARM`) — required to fire prayer adhan at the precise calculated time.
+- **Exact alarms** (`SCHEDULE_EXACT_ALARM`) — required to fire prayer adhan at the precise calculated time. Runtime-granted.
 - **Boot completed** (`RECEIVE_BOOT_COMPLETED`) — re-schedule prayer alarms after device restart.
 - **Ignore battery optimizations** (`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`) — optional, lets you exclude the app so prayer alarms aren't suppressed by OEM battery savers.
 
@@ -48,13 +48,11 @@ The app calls these services. Each has its own privacy policy.
 | Firebase Auth (Google) | Email, Google credential | Sign-in only |
 | Cloud Firestore (Google) | Profile + app data from §1.1 | Cloud backup so you can restore on a new device |
 | AlAdhan API (`api.aladhan.com`) | Latitude, longitude, date | Prayer-time calculation |
-| NewsAPI (`newsapi.org`) | Search query terms | Islamic news feed |
 | ExerciseDB via RapidAPI | Exercise lookup keywords | Fitness exercise database |
 | YouTube (via system browser) | Search query | "How to perform exercise" video lookup |
 
 - Firebase / Firestore: https://firebase.google.com/support/privacy
 - AlAdhan: https://aladhan.com/privacy
-- NewsAPI: https://newsapi.org/privacy
 - RapidAPI: https://rapidapi.com/privacy
 - YouTube: https://policies.google.com/privacy
 

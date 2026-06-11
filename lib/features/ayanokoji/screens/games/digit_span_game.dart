@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -104,12 +104,12 @@ class _DigitSpanGameState extends State<DigitSpanGame> {
         const Spacer(),
         Text(
           _maxSpanReached == 0 ? 'Length' : 'Next span',
-          style: const TextStyle(color: AppColors.muted),
+          style: TextStyle(color: context.colors.muted),
         ),
         Text(
           '$_spanLength',
-          style: const TextStyle(
-            color: AppColors.accent,
+          style: TextStyle(
+            color: context.colors.accent,
             fontSize: 80,
             fontWeight: FontWeight.w800,
           ),
@@ -119,7 +119,7 @@ class _DigitSpanGameState extends State<DigitSpanGame> {
           _maxSpanReached == 0
               ? 'A sequence of $_spanLength digits will flash one at a time. Recall them in order.'
               : 'You\'re on span $_spanLength. Keep going.',
-          style: const TextStyle(color: AppColors.muted),
+          style: TextStyle(color: context.colors.muted),
           textAlign: TextAlign.center,
         ),
         const Spacer(),
@@ -143,7 +143,7 @@ class _DigitSpanGameState extends State<DigitSpanGame> {
       child: Text(
         digit == null ? '·' : '$digit',
         style: TextStyle(
-          color: digit == null ? AppColors.muted : AppColors.text,
+          color: digit == null ? context.colors.muted : context.colors.text,
           fontSize: 140,
           fontWeight: FontWeight.w900,
         ),
@@ -156,16 +156,16 @@ class _DigitSpanGameState extends State<DigitSpanGame> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Spacer(),
-        const Text('Type the digits you saw',
-            style: TextStyle(color: AppColors.muted)),
+        Text('Type the digits you saw',
+            style: TextStyle(color: context.colors.muted)),
         const SizedBox(height: 12),
         TextField(
           controller: _input,
           autofocus: true,
           keyboardType: TextInputType.number,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.text,
+          style: TextStyle(
+            color: context.colors.text,
             fontSize: 44,
             fontWeight: FontWeight.w800,
             letterSpacing: 8,
@@ -193,23 +193,23 @@ class _DigitSpanGameState extends State<DigitSpanGame> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Spacer(),
-        const Icon(Icons.psychology, color: AppColors.accent, size: 60),
+        Icon(Icons.psychology, color: context.colors.accent, size: 60),
         const SizedBox(height: 12),
-        const Text('Round over',
-            style: TextStyle(color: AppColors.muted, fontSize: 14)),
+        Text('Round over',
+            style: TextStyle(color: context.colors.muted, fontSize: 14)),
         const SizedBox(height: 4),
         Text(
           'Max span: $_maxSpanReached',
-          style: const TextStyle(
-            color: AppColors.text,
+          style: TextStyle(
+            color: context.colors.text,
             fontSize: 32,
             fontWeight: FontWeight.w800,
           ),
         ),
         const SizedBox(height: 6),
         Text('+$xp Intelligence XP',
-            style: const TextStyle(
-                color: AppColors.accent, fontWeight: FontWeight.w700)),
+            style: TextStyle(
+                color: context.colors.accent, fontWeight: FontWeight.w700)),
         const Spacer(),
         SizedBox(
           width: double.infinity,

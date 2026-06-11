@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hijri/hijri_calendar.dart';
@@ -71,15 +71,15 @@ class _PrayerScreenState extends State<PrayerScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Prayer',
+            Text('Prayer',
                 style: TextStyle(
-                  color: AppColors.text,
+                  color: context.colors.text,
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                 )),
             Text(hijriLabel,
-                style: const TextStyle(
-                  color: AppColors.muted,
+                style: TextStyle(
+                  color: context.colors.muted,
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                 )),
@@ -118,15 +118,15 @@ class _PrayerScreenState extends State<PrayerScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Today',
+                Text('Today',
                     style: TextStyle(
-                        color: AppColors.muted,
+                        color: context.colors.muted,
                         fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Text(
                   '${prayer.completedToday()} / 5 prayers',
-                  style: const TextStyle(
-                    color: AppColors.text,
+                  style: TextStyle(
+                    color: context.colors.text,
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
                   ),
@@ -137,10 +137,10 @@ class _PrayerScreenState extends State<PrayerScreen> {
                   child: LinearProgressIndicator(
                     value: prayer.completedToday() / 5,
                     minHeight: 10,
-                    backgroundColor: AppColors.surfaceAlt,
+                    backgroundColor: context.colors.surfaceAlt,
                     color: prayer.completedToday() == 5
-                        ? AppColors.success
-                        : AppColors.accent,
+                        ? context.colors.success
+                        : context.colors.accent,
                   ),
                 ),
               ],
@@ -162,12 +162,12 @@ class _PrayerScreenState extends State<PrayerScreen> {
             EliteCard(
               child: Column(
                 children: [
-                  const Icon(Icons.error_outline,
-                      color: AppColors.danger, size: 36),
+                  Icon(Icons.error_outline,
+                      color: context.colors.danger, size: 36),
                   const SizedBox(height: 12),
                   Text(
                     prayer.locationError!,
-                    style: const TextStyle(color: AppColors.muted),
+                    style: TextStyle(color: context.colors.muted),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -186,12 +186,12 @@ class _PrayerScreenState extends State<PrayerScreen> {
             EliteCard(
               child: Column(
                 children: [
-                  const Icon(Icons.location_on_outlined,
-                      color: AppColors.muted, size: 36),
+                  Icon(Icons.location_on_outlined,
+                      color: context.colors.muted, size: 36),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'Set your city to load prayer times.',
-                    style: TextStyle(color: AppColors.muted),
+                    style: TextStyle(color: context.colors.muted),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -234,7 +234,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
     return EliteCard(
       child: Row(
         children: [
-          const Icon(Icons.location_city, color: AppColors.muted, size: 20),
+          Icon(Icons.location_city, color: context.colors.muted, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -243,8 +243,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
                   : 'No city set',
               style: TextStyle(
                 color: prayer.address?.isNotEmpty == true
-                    ? AppColors.text
-                    : AppColors.muted,
+                    ? context.colors.text
+                    : context.colors.muted,
               ),
             ),
           ),
@@ -273,7 +273,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
       padding: const EdgeInsets.only(bottom: 10),
       child: EliteCard(
         onTap: () => ctrl.toggle(slot),
-        color: isNext ? AppColors.primary.withValues(alpha: 0.08) : null,
+        color: isNext ? context.colors.primary.withValues(alpha: 0.08) : null,
         child: Row(
           children: [
             // Check circle
@@ -282,13 +282,13 @@ class _PrayerScreenState extends State<PrayerScreen> {
               height: 40,
               decoration: BoxDecoration(
                 color: done
-                    ? AppColors.success.withValues(alpha: 0.2)
-                    : AppColors.surfaceAlt,
+                    ? context.colors.success.withValues(alpha: 0.2)
+                    : context.colors.surfaceAlt,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 done ? Icons.check : Icons.mosque,
-                color: done ? AppColors.success : AppColors.muted,
+                color: done ? context.colors.success : context.colors.muted,
                 size: 22,
               ),
             ),
@@ -299,15 +299,15 @@ class _PrayerScreenState extends State<PrayerScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(slot.labelOn(DateTime.now()),
-                      style: const TextStyle(
-                        color: AppColors.text,
+                      style: TextStyle(
+                        color: context.colors.text,
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
                       )),
                   if (isNext)
-                    const Text('Next',
+                    Text('Next',
                         style: TextStyle(
-                            color: AppColors.primary,
+                            color: context.colors.primary,
                             fontSize: 12,
                             fontWeight: FontWeight.w600)),
                 ],
@@ -318,13 +318,13 @@ class _PrayerScreenState extends State<PrayerScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(t == null ? '--:--' : DateX.prettyTime(t),
-                    style: const TextStyle(
-                        color: AppColors.text,
+                    style: TextStyle(
+                        color: context.colors.text,
                         fontWeight: FontWeight.w600)),
                 if (overridden)
-                  const Text('edited',
+                  Text('edited',
                       style: TextStyle(
-                          color: AppColors.accent,
+                          color: context.colors.accent,
                           fontSize: 10,
                           fontWeight: FontWeight.w600)),
               ],
@@ -335,14 +335,14 @@ class _PrayerScreenState extends State<PrayerScreen> {
               icon: Icon(
                 overridden ? Icons.edit : Icons.edit_outlined,
                 size: 18,
-                color: overridden ? AppColors.accent : AppColors.muted,
+                color: overridden ? context.colors.accent : context.colors.muted,
               ),
               onPressed: () => _editSlotTime(context, ctrl, slot, t),
             ),
             Checkbox(
               value: done,
               onChanged: (_) => ctrl.toggle(slot),
-              activeColor: AppColors.success,
+              activeColor: context.colors.success,
               shape: const CircleBorder(),
             ),
           ],
@@ -380,7 +380,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
     if (context.mounted) {
       showModalBottomSheet(
         context: context,
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.colors.surface,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
@@ -390,17 +390,17 @@ class _PrayerScreenState extends State<PrayerScreen> {
             children: [
               ListTile(
                 leading:
-                    const Icon(Icons.check_circle, color: AppColors.success),
+                    Icon(Icons.check_circle, color: context.colors.success),
                 title: Text(
                     '${slot.labelOn(DateTime.now())} set to ${picked.format(context)}'),
-                subtitle: const Text('Tap "Reset" to revert to API time.',
-                    style: TextStyle(color: AppColors.muted, fontSize: 12)),
+                subtitle: Text('Tap "Reset" to revert to API time.',
+                    style: TextStyle(color: context.colors.muted, fontSize: 12)),
               ),
               ListTile(
                 leading:
-                    const Icon(Icons.refresh, color: AppColors.muted),
-                title: const Text('Reset to automatic',
-                    style: TextStyle(color: AppColors.text)),
+                    Icon(Icons.refresh, color: context.colors.muted),
+                title: Text('Reset to automatic',
+                    style: TextStyle(color: context.colors.text)),
                 onTap: () {
                   ctrl.clearOverride(slot);
                   Navigator.pop(context);
@@ -420,7 +420,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.colors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -466,8 +466,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(dua.title,
-                  style: const TextStyle(
-                    color: AppColors.text,
+                  style: TextStyle(
+                    color: context.colors.text,
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
                   )),
@@ -476,8 +476,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
                 dua.arabic,
                 textDirection: TextDirection.rtl,
                 textAlign: TextAlign.right,
-                style: const TextStyle(
-                  color: AppColors.accent,
+                style: TextStyle(
+                  color: context.colors.accent,
                   fontSize: 20,
                   height: 1.7,
                   fontWeight: FontWeight.w600,
@@ -486,16 +486,16 @@ class _PrayerScreenState extends State<PrayerScreen> {
               const SizedBox(height: 8),
               Text(
                 dua.transliteration,
-                style: const TextStyle(
-                  color: AppColors.text,
+                style: TextStyle(
+                  color: context.colors.text,
                   fontStyle: FontStyle.italic,
                   height: 1.4,
                 ),
               ),
               const SizedBox(height: 6),
               Text(dua.meaning,
-                  style: const TextStyle(
-                      color: AppColors.muted, height: 1.4)),
+                  style: TextStyle(
+                      color: context.colors.muted, height: 1.4)),
             ],
           ),
         ),
@@ -564,23 +564,23 @@ class _AddressSheetState extends State<_AddressSheet> {
         children: [
           Row(
             children: [
-              const Text('Prayer city',
+              Text('Prayer city',
                   style: TextStyle(
-                    color: AppColors.text,
+                    color: context.colors.text,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   )),
               const Spacer(),
               IconButton(
-                icon: const Icon(Icons.close, color: AppColors.muted),
+                icon: Icon(Icons.close, color: context.colors.muted),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Enter a city name or full address. Times are fetched from aladhan.com.',
-            style: TextStyle(color: AppColors.muted, fontSize: 12),
+            style: TextStyle(color: context.colors.muted, fontSize: 12),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -588,10 +588,10 @@ class _AddressSheetState extends State<_AddressSheet> {
             autofocus: true,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _submit(),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'e.g. Dhaka, Bangladesh',
               prefixIcon:
-                  Icon(Icons.search, color: AppColors.muted, size: 20),
+                  Icon(Icons.search, color: context.colors.muted, size: 20),
             ),
           ),
           const SizedBox(height: 12),
@@ -617,12 +617,12 @@ class _AddressSheetState extends State<_AddressSheet> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: _saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppColors.background),
+                            color: context.colors.background),
                       )
                     : const Text('Load prayer times',
                         style: TextStyle(fontSize: 16)),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -15,9 +15,9 @@ class WorkoutHistoryScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Workout history')),
       body: sessions.isEmpty
-          ? const Center(
+          ? Center(
               child: Text('No workouts logged yet.',
-                  style: TextStyle(color: AppColors.muted)),
+                  style: TextStyle(color: context.colors.muted)),
             )
           : ListView.separated(
               padding: EdgeInsets.fromLTRB(
@@ -29,8 +29,8 @@ class WorkoutHistoryScreen extends StatelessWidget {
                 return EliteCard(
                   child: Row(
                     children: [
-                      const Icon(Icons.fitness_center,
-                          color: AppColors.primary),
+                      Icon(Icons.fitness_center,
+                          color: context.colors.primary),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -38,15 +38,15 @@ class WorkoutHistoryScreen extends StatelessWidget {
                           children: [
                             Text(
                               '${s.exercises.length} exercises',
-                              style: const TextStyle(
-                                color: AppColors.text,
+                              style: TextStyle(
+                                color: context.colors.text,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             Text(
                               '${DateX.monthDay(s.startedAt)} · ${DateX.prettyTime(s.startedAt)}',
-                              style: const TextStyle(
-                                  color: AppColors.muted, fontSize: 12),
+                              style: TextStyle(
+                                  color: context.colors.muted, fontSize: 12),
                             ),
                           ],
                         ),
@@ -55,18 +55,18 @@ class WorkoutHistoryScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(formatDuration(s.totalDuration),
-                              style: const TextStyle(
-                                color: AppColors.accent,
+                              style: TextStyle(
+                                color: context.colors.accent,
                                 fontWeight: FontWeight.w700,
                               )),
                           Text('~${s.totalKcal.round()} kcal',
-                              style: const TextStyle(
-                                  color: AppColors.muted, fontSize: 12)),
+                              style: TextStyle(
+                                  color: context.colors.muted, fontSize: 12)),
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete_outline,
-                            color: AppColors.muted),
+                        icon: Icon(Icons.delete_outline,
+                            color: context.colors.muted),
                         onPressed: () => context
                             .read<FitnessController>()
                             .deleteSession(s.id),

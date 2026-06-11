@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -39,28 +39,28 @@ class AchievementsScreen extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(
             20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
         children: [
-          _hero(ctrl),
+          _hero(context, ctrl),
           const SizedBox(height: 24),
           const SectionHeader(title: 'Title ladder'),
-          _titleLadder(ctrl.level.level),
+          _titleLadder(context, ctrl.level.level),
           const SizedBox(height: 24),
           SectionHeader(title: 'Unlocked (${unlocked.length})'),
           if (unlocked.isEmpty)
-            const EliteCard(
+            EliteCard(
               child: Text('Nothing yet — start building streaks.',
-                  style: TextStyle(color: AppColors.muted)),
+                  style: TextStyle(color: context.colors.muted)),
             )
           else
-            ...unlocked.map((a) => _badgeRow(ctrl, a, unlocked: true)),
+            ...unlocked.map((a) => _badgeRow(context, ctrl, a, unlocked: true)),
           const SizedBox(height: 24),
           SectionHeader(title: 'In progress (${locked.length})'),
-          ...locked.map((a) => _badgeRow(ctrl, a, unlocked: false)),
+          ...locked.map((a) => _badgeRow(context, ctrl, a, unlocked: false)),
         ],
       ),
     );
   }
 
-  Widget _hero(GamificationController ctrl) {
+  Widget _hero(BuildContext context, GamificationController ctrl) {
     return EliteCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,14 +71,14 @@ class AchievementsScreen extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.15),
+                  color: context.colors.accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.accent, width: 2),
+                  border: Border.all(color: context.colors.accent, width: 2),
                 ),
                 alignment: Alignment.center,
                 child: Text('${ctrl.level.level}',
-                    style: const TextStyle(
-                      color: AppColors.accent,
+                    style: TextStyle(
+                      color: context.colors.accent,
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
                     )),
@@ -90,8 +90,8 @@ class AchievementsScreen extends StatelessWidget {
                   children: [
                     Text(
                       ctrl.title.toUpperCase(),
-                      style: const TextStyle(
-                        color: AppColors.accent,
+                      style: TextStyle(
+                        color: context.colors.accent,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 3,
@@ -99,8 +99,8 @@ class AchievementsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text('${ctrl.totalXp} XP',
-                        style: const TextStyle(
-                          color: AppColors.text,
+                        style: TextStyle(
+                          color: context.colors.text,
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
                         )),
@@ -115,21 +115,21 @@ class AchievementsScreen extends StatelessWidget {
             child: LinearProgressIndicator(
               value: ctrl.level.progress,
               minHeight: 10,
-              backgroundColor: AppColors.surfaceAlt,
-              color: AppColors.accent,
+              backgroundColor: context.colors.surfaceAlt,
+              color: context.colors.accent,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             '${ctrl.level.xpToNextLevel} XP to level ${ctrl.level.level + 1}',
-            style: const TextStyle(color: AppColors.muted, fontSize: 12),
+            style: TextStyle(color: context.colors.muted, fontSize: 12),
           ),
         ],
       ),
     );
   }
 
-  Widget _titleLadder(int currentLevel) {
+  Widget _titleLadder(BuildContext context, int currentLevel) {
     return EliteCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Column(
@@ -143,7 +143,7 @@ class AchievementsScreen extends StatelessWidget {
               children: [
                 Icon(
                   reached ? Icons.check_circle : Icons.lock_outline,
-                  color: reached ? AppColors.success : AppColors.muted,
+                  color: reached ? context.colors.success : context.colors.muted,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -152,22 +152,22 @@ class AchievementsScreen extends StatelessWidget {
                     children: [
                       Text(band.title,
                           style: TextStyle(
-                            color: reached ? AppColors.text : AppColors.muted,
+                            color: reached ? context.colors.text : context.colors.muted,
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
                           )),
                       Text(
                         'Level ${band.minLevel}+',
-                        style: const TextStyle(
-                            color: AppColors.muted, fontSize: 12),
+                        style: TextStyle(
+                            color: context.colors.muted, fontSize: 12),
                       ),
                     ],
                   ),
                 ),
                 if (next)
-                  const Text('NEXT',
+                  Text('NEXT',
                       style: TextStyle(
-                        color: AppColors.accent,
+                        color: context.colors.accent,
                         fontWeight: FontWeight.w700,
                         fontSize: 11,
                         letterSpacing: 1.5,
@@ -180,7 +180,8 @@ class AchievementsScreen extends StatelessWidget {
     );
   }
 
-  Widget _badgeRow(GamificationController ctrl, Achievement a,
+  Widget _badgeRow(BuildContext context, GamificationController ctrl,
+      Achievement a,
       {required bool unlocked}) {
     final (current, target) = ctrl.progressFor(a);
     final pct = target == 0 ? 0.0 : (current / target).clamp(0.0, 1.0);
@@ -195,13 +196,13 @@ class AchievementsScreen extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 color: unlocked
-                    ? AppColors.success.withValues(alpha: 0.15)
-                    : AppColors.surfaceAlt,
+                    ? context.colors.success.withValues(alpha: 0.15)
+                    : context.colors.surfaceAlt,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 unlocked ? a.icon : Icons.lock_outline,
-                color: unlocked ? AppColors.success : AppColors.muted,
+                color: unlocked ? context.colors.success : context.colors.muted,
               ),
             ),
             const SizedBox(width: 12),
@@ -211,26 +212,26 @@ class AchievementsScreen extends StatelessWidget {
                 children: [
                   Text(a.name,
                       style: TextStyle(
-                        color: unlocked ? AppColors.text : AppColors.muted,
+                        color: unlocked ? context.colors.text : context.colors.muted,
                         fontWeight: FontWeight.w700,
                       )),
                   Text(a.description,
-                      style: const TextStyle(
-                          color: AppColors.muted, fontSize: 12)),
+                      style: TextStyle(
+                          color: context.colors.muted, fontSize: 12)),
                   const SizedBox(height: 6),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
                       value: pct,
                       minHeight: 5,
-                      backgroundColor: AppColors.surfaceAlt,
-                      color: unlocked ? AppColors.success : AppColors.accent,
+                      backgroundColor: context.colors.surfaceAlt,
+                      color: unlocked ? context.colors.success : context.colors.accent,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text('$current / $target',
-                      style: const TextStyle(
-                          color: AppColors.muted, fontSize: 11)),
+                      style: TextStyle(
+                          color: context.colors.muted, fontSize: 11)),
                 ],
               ),
             ),

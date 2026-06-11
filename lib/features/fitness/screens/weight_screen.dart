@@ -1,4 +1,4 @@
-import 'package:fl_chart/fl_chart.dart';
+﻿import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -38,9 +38,9 @@ class WeightScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Latest',
+                      Text('Latest',
                           style: TextStyle(
-                              color: AppColors.muted,
+                              color: context.colors.muted,
                               fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),
                       Text(
@@ -49,8 +49,8 @@ class WeightScreen extends StatelessWidget {
                                 ? '${profile!.weightKg.toStringAsFixed(1)} kg'
                                 : '-- kg')
                             : '${weights.last.weightKg.toStringAsFixed(1)} kg',
-                        style: const TextStyle(
-                          color: AppColors.text,
+                        style: TextStyle(
+                          color: context.colors.text,
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
                         ),
@@ -62,13 +62,13 @@ class WeightScreen extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Text('Goal',
-                          style: TextStyle(color: AppColors.muted)),
+                      Text('Goal',
+                          style: TextStyle(color: context.colors.muted)),
                       const SizedBox(height: 6),
                       Text(
                         '${profile.goalWeightKg.toStringAsFixed(1)} kg',
-                        style: const TextStyle(
-                          color: AppColors.accent,
+                        style: TextStyle(
+                          color: context.colors.accent,
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                         ),
@@ -80,20 +80,20 @@ class WeightScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           if (weights.length < 2)
-            const EliteCard(
+            EliteCard(
               child: Text(
                 'Log at least two weigh-ins to see a trend.',
-                style: TextStyle(color: AppColors.muted),
+                style: TextStyle(color: context.colors.muted),
               ),
             )
           else
-            _weightChart(weights),
+            _weightChart(context, weights),
           const SizedBox(height: 20),
           const SectionHeader(title: 'Log'),
           if (weights.isEmpty)
-            const EliteCard(
+            EliteCard(
               child: Text('No entries yet. Tap + to log a weight.',
-                  style: TextStyle(color: AppColors.muted)),
+                  style: TextStyle(color: context.colors.muted)),
             )
           else
             ...weights.reversed.map((w) {
@@ -104,21 +104,21 @@ class WeightScreen extends StatelessWidget {
                       horizontal: 14, vertical: 10),
                   child: Row(
                     children: [
-                      const Icon(Icons.monitor_weight,
-                          color: AppColors.primary),
+                      Icon(Icons.monitor_weight,
+                          color: context.colors.primary),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(DateX.monthDay(w.date),
-                            style: const TextStyle(color: AppColors.text)),
+                            style: TextStyle(color: context.colors.text)),
                       ),
                       Text('${w.weightKg.toStringAsFixed(1)} kg',
-                          style: const TextStyle(
-                            color: AppColors.text,
+                          style: TextStyle(
+                            color: context.colors.text,
                             fontWeight: FontWeight.w700,
                           )),
                       IconButton(
-                        icon: const Icon(Icons.delete_outline,
-                            color: AppColors.muted),
+                        icon: Icon(Icons.delete_outline,
+                            color: context.colors.muted),
                         onPressed: () => fc.deleteWeight(w.id),
                       ),
                     ],
@@ -131,7 +131,7 @@ class WeightScreen extends StatelessWidget {
     );
   }
 
-  Widget _weightChart(List weights) {
+  Widget _weightChart(BuildContext context, List weights) {
     final spots = <FlSpot>[];
     for (var i = 0; i < weights.length; i++) {
       spots.add(FlSpot(i.toDouble(), (weights[i].weightKg as double)));
@@ -156,8 +156,8 @@ class WeightScreen extends StatelessWidget {
             gridData: FlGridData(
               show: true,
               drawVerticalLine: false,
-              getDrawingHorizontalLine: (v) => const FlLine(
-                color: AppColors.surfaceAlt,
+              getDrawingHorizontalLine: (v) => FlLine(
+                color: context.colors.surfaceAlt,
                 strokeWidth: 1,
               ),
             ),
@@ -166,12 +166,12 @@ class WeightScreen extends StatelessWidget {
               LineChartBarData(
                 spots: spots,
                 isCurved: true,
-                color: AppColors.primary,
+                color: context.colors.primary,
                 barWidth: 3,
                 dotData: const FlDotData(show: true),
                 belowBarData: BarAreaData(
                   show: true,
-                  color: AppColors.primary.withValues(alpha: 0.08),
+                  color: context.colors.primary.withValues(alpha: 0.08),
                 ),
               ),
             ],
@@ -189,7 +189,7 @@ class WeightScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.colors.surface,
         title: const Text('Log weight'),
         content: TextField(
           controller: ctrl,

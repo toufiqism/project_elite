@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/ca_subjects.dart';
@@ -159,16 +159,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Row(
                 children: [
-                  const Text('Project Elite',
+                  Text('Project Elite',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.accent,
+                        color: context.colors.accent,
                         letterSpacing: 0.5,
                       )),
                   const Spacer(),
                   Text('${_page + 1} / $_totalPages',
-                      style: const TextStyle(color: AppColors.muted)),
+                      style: TextStyle(color: context.colors.muted)),
                 ],
               ),
             ),
@@ -177,8 +177,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: LinearProgressIndicator(
                 value: (_page + 1) / _totalPages,
-                backgroundColor: AppColors.surfaceAlt,
-                color: AppColors.primary,
+                backgroundColor: context.colors.surfaceAlt,
+                color: context.colors.primary,
                 minHeight: 4,
               ),
             ),
@@ -227,13 +227,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w800,
-                color: AppColors.text,
+                color: context.colors.text,
               )),
           const SizedBox(height: 8),
-          Text(subtitle, style: const TextStyle(color: AppColors.muted)),
+          Text(subtitle, style: TextStyle(color: context.colors.muted)),
           const SizedBox(height: 24),
           ...children,
         ],
@@ -320,8 +320,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             });
           }),
           const SizedBox(height: 16),
-          const Text('Pick subjects (tap to add)',
-              style: TextStyle(color: AppColors.muted)),
+          Text('Pick subjects (tap to add)',
+              style: TextStyle(color: context.colors.muted)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -338,15 +338,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     _selectedSubjects.remove(s);
                   }
                 }),
-                backgroundColor: AppColors.surface,
-                selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                checkmarkColor: AppColors.primary,
+                backgroundColor: context.colors.surface,
+                selectedColor: context.colors.primary.withValues(alpha: 0.2),
+                checkmarkColor: context.colors.primary,
                 labelStyle: TextStyle(
-                  color: selected ? AppColors.primary : AppColors.text,
+                  color: selected ? context.colors.primary : context.colors.text,
                 ),
                 shape: StadiumBorder(
                   side: BorderSide(
-                    color: selected ? AppColors.primary : AppColors.surfaceAlt,
+                    color: selected ? context.colors.primary : context.colors.surfaceAlt,
                   ),
                 ),
               );
@@ -358,7 +358,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           _studyMode == StudyMode.ca
               ? 'Add a custom subject / chapter'
               : 'Add your subjects',
-          style: const TextStyle(color: AppColors.muted),
+          style: TextStyle(color: context.colors.muted),
         ),
         const SizedBox(height: 8),
         Row(children: [
@@ -387,7 +387,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ]),
         if (_selectedSubjects.isNotEmpty) ...[
           const SizedBox(height: 16),
-          const Text('Selected', style: TextStyle(color: AppColors.muted)),
+          Text('Selected', style: TextStyle(color: context.colors.muted)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -396,7 +396,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               return Chip(
                 label: Text(s),
                 onDeleted: () => setState(() => _selectedSubjects.remove(s)),
-                backgroundColor: AppColors.surfaceAlt,
+                backgroundColor: context.colors.surfaceAlt,
               );
             }).toList(),
           ),
@@ -448,7 +448,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           decoration: const InputDecoration(labelText: 'Water goal (liters)'),
         ),
         const SizedBox(height: 16),
-        const Text('Stress level', style: TextStyle(color: AppColors.muted)),
+        Text('Stress level', style: TextStyle(color: context.colors.muted)),
         Slider(
           value: _stress.toDouble(),
           min: 1,
@@ -494,9 +494,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.check_circle, color: AppColors.success, size: 20),
+            Icon(Icons.check_circle, color: context.colors.success, size: 20),
             const SizedBox(width: 10),
-            Expanded(child: Text(s, style: const TextStyle(color: AppColors.text))),
+            Expanded(child: Text(s, style: TextStyle(color: context.colors.text))),
           ],
         ),
       );
@@ -505,7 +505,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return DropdownButtonFormField<String>(
       initialValue: value,
       decoration: InputDecoration(labelText: label),
-      dropdownColor: AppColors.surfaceAlt,
+      dropdownColor: context.colors.surfaceAlt,
       items: opts
           .map((o) => DropdownMenuItem(value: o, child: Text(o)))
           .toList(),

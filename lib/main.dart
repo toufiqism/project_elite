@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 import 'core/storage/hive_setup.dart';
 import 'features/sync/service/sync_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_controller.dart';
 import 'features/ayanokoji/state/ayanokoji_controller.dart';
 import 'features/auth/screens/auth_screen.dart';
 import 'features/auth/state/auth_controller.dart';
@@ -21,7 +22,6 @@ import 'features/gamification/state/gamification_controller.dart';
 import 'features/habits/state/habit_controller.dart';
 import 'features/islamic/data/dua_service.dart';
 import 'features/islamic/state/tasbih_controller.dart';
-import 'features/news/state/news_controller.dart';
 import 'features/notifications/service/notification_service.dart';
 import 'features/notifications/state/notification_controller.dart';
 import 'features/prayer/state/prayer_controller.dart';
@@ -32,19 +32,9 @@ import 'firebase_options.dart';
 import 'main_shell.dart';
 
 Future<void> main() async {
-  // ignore: avoid_print
-  print('ELITE_BOOT: main start');
   final binding = WidgetsFlutterBinding.ensureInitialized();
-  // ignore: avoid_print
-  print('ELITE_BOOT: binding ready');
-  // Hold the native splash explicitly. On Android 12+ the auto-dismiss is
-  // unreliable in AOT release builds (Realme/Android 15 stuck on splash
-  // permanently). Manual remove after the first Flutter frame guarantees
-  // the splash drawable goes away.
   FlutterNativeSplash.preserve(widgetsBinding: binding);
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  // ignore: avoid_print
-  print('ELITE_BOOT: edgeToEdge set');
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
@@ -53,14 +43,7 @@ Future<void> main() async {
     systemNavigationBarContrastEnforced: false,
   ));
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // ignore: avoid_print
-  print('ELITE_BOOT: firebase ready');
 
-  // Crashlytics: collect only in release. Debug builds report into the local
-  // console instead so dev errors don't pollute the prod dashboard. The
-  // setCollectionEnabled call is fire-and-forget — awaiting it on first
-  // launch can block runApp behind a network sync (saw a permanent splash
-  // hang on Realme/Android 15 when this was awaited).
   unawaited(FirebaseCrashlytics.instance
       .setCrashlyticsCollectionEnabled(kReleaseMode));
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
@@ -74,21 +57,21 @@ Future<void> main() async {
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
   await HiveSetup.init();
-  // ignore: avoid_print
-  print('ELITE_BOOT: hive ready');
-  await NotificationService.instance.init();
-  // ignore: avoid_print
-  print('ELITE_BOOT: notifications ready');
   await DuaService.instance.load();
-  // ignore: avoid_print
-  print('ELITE_BOOT: duas ready, calling runApp');
   runApp(const ProjectEliteApp());
-  // ignore: avoid_print
-  print('ELITE_BOOT: runApp returned');
-  // Remove splash after the first frame paints so users see the real UI,
-  // not a stuck system splash drawable.
-  WidgetsBinding.instance.addPostFrameCallback(
-      (_) => FlutterNativeSplash.remove());
+  // Notifications init is deferred to post-frame: awaiting
+  // flutter_local_notifications' initialize() before runApp on Realme/Android 15
+  // release AOT builds blocks the splash indefinitely. Schedules attempted
+  // before init resolves are queued internally by the plugin.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    FlutterNativeSplash.remove();
+    unawaited(() async {
+      await NotificationService.instance.init();
+      // Fire POST_NOTIFICATIONS dialog on first launch. SCHEDULE_EXACT_ALARM
+      // is requested later by reschedule (it launches Settings, jarring at boot).
+      await NotificationService.instance.requestNotificationsOnly();
+    }());
+  });
 }
 
 class ProjectEliteApp extends StatelessWidget {
@@ -98,9 +81,9 @@ class ProjectEliteApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeController()),
         ChangeNotifierProvider(create: (_) => AuthController()),
         ChangeNotifierProvider(create: (_) => ProfileController()),
-        ChangeNotifierProvider(create: (_) => NewsController()),
         ChangeNotifierProvider(create: (_) => StudyController()),
         ChangeNotifierProvider(create: (_) => HabitController()),
         ChangeNotifierProvider(create: (_) => FitnessController()),
@@ -159,11 +142,34 @@ class ProjectEliteApp extends StatelessWidget {
           },
         ),
       ],
-      child: MaterialApp(
-        title: 'Project Elite',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.dark(),
-        home: const _Root(),
+      child: Consumer<ThemeController>(
+        builder: (context, themeCtrl, _) => MaterialApp(
+          title: 'Project Elite',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: themeCtrl.mode,
+          // Drive the status/nav bar icon brightness from the resolved theme so
+          // they stay legible in light mode (white icons vanish on a light bg).
+          builder: (context, child) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness:
+                    isDark ? Brightness.light : Brightness.dark,
+                statusBarBrightness:
+                    isDark ? Brightness.dark : Brightness.light,
+                systemNavigationBarColor: Colors.transparent,
+                systemNavigationBarIconBrightness:
+                    isDark ? Brightness.light : Brightness.dark,
+                systemNavigationBarContrastEnforced: false,
+              ),
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
+          home: const _Root(),
+        ),
       ),
     );
   }

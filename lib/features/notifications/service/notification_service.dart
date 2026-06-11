@@ -36,7 +36,10 @@ class NotificationService {
 
     // Status-bar icon MUST be a white-on-transparent silhouette per Android
     // guidelines; colored mipmap icons get rendered as a solid white square.
-    const android = AndroidInitializationSettings('@drawable/ic_stat_notification');
+    // NB: pass the bare drawable name — the '@drawable/' prefix makes the
+    // plugin's getIdentifier lookup fail with invalid_icon, which throws inside
+    // initialize() and leaves the whole notification subsystem dead.
+    const android = AndroidInitializationSettings('ic_stat_notification');
     const ios = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -55,7 +58,9 @@ class NotificationService {
     _ready = true;
   }
 
-  Future<bool> requestPermissions() async {
+  /// POST_NOTIFICATIONS (Android 13+) / iOS alert+badge+sound. Cheap, just a
+  /// system dialog. Safe to call at boot — does NOT open Settings.
+  Future<bool> requestNotificationsOnly() async {
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     final ios = _plugin.resolvePlatformSpecificImplementation<
@@ -65,10 +70,6 @@ class NotificationService {
     if (android != null) {
       final n = await android.requestNotificationsPermission();
       ok = n ?? ok;
-      // Android 12+: SCHEDULE_EXACT_ALARM needs explicit grant. Without this,
-      // zonedSchedule with exactAllowWhileIdle silently falls back to inexact,
-      // which Doze can delay or drop entirely while the app is closed.
-      await android.requestExactAlarmsPermission();
     }
     if (ios != null) {
       final n = await ios.requestPermissions(
@@ -78,6 +79,23 @@ class NotificationService {
       );
       ok = n ?? ok;
     }
+    return ok;
+  }
+
+  /// SCHEDULE_EXACT_ALARM only. Launches a system Settings page on Android 14+,
+  /// so the awaiting coroutine pauses until the activity returns. Callers must
+  /// not gate critical code (showNow, schedules) on this completing.
+  Future<void> requestExactAlarmsOnly() async {
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (android != null) {
+      await android.requestExactAlarmsPermission();
+    }
+  }
+
+  Future<bool> requestPermissions() async {
+    final ok = await requestNotificationsOnly();
+    await requestExactAlarmsOnly();
     return ok;
   }
 
@@ -142,7 +160,22 @@ class NotificationService {
     required String body,
     required NotificationTone tone,
   }) async {
+    if (!_ready) await init();
     await _plugin.show(id, title, body, _details(channel, tone));
+  }
+
+  /// Picks exact scheduling when the user has granted SCHEDULE_EXACT_ALARM,
+  /// otherwise falls back to inexact. Using exactAllowWhileIdle without the
+  /// grant throws PlatformException(exact_alarms_not_permitted) on Android 14+,
+  /// which would abort the whole reschedule and leave nothing queued.
+  Future<AndroidScheduleMode> _scheduleMode() async {
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (android == null) return AndroidScheduleMode.exactAllowWhileIdle;
+    final canExact = await android.canScheduleExactNotifications() ?? false;
+    return canExact
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexactAllowWhileIdle;
   }
 
   Future<void> scheduleAt({
@@ -161,7 +194,7 @@ class NotificationService {
       body,
       scheduled,
       _details(channel, tone),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: await _scheduleMode(),
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
@@ -187,7 +220,7 @@ class NotificationService {
       body,
       when,
       _details(channel, tone),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: await _scheduleMode(),
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,

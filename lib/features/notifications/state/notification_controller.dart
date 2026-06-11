@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
@@ -76,12 +78,22 @@ class NotificationController extends ChangeNotifier {
     }
   }
 
-  /// Called once during app start: initializes the plugin and requests perms.
+  /// Plugin init only — does NOT request perms. requestExactAlarmsPermission
+  /// launches a Settings activity on Android 14+, which would background the
+  /// app mid-await and cause callers (showNow / fireTest) to never resolve.
+  /// Perms are requested separately: POST_NOTIFICATIONS at boot,
+  /// SCHEDULE_EXACT_ALARM lazily by [_ensureExactAlarmsPermission].
   Future<void> ensureInitialized() async {
     if (_initialized) return;
     await _svc.init();
-    await _svc.requestPermissions();
     _initialized = true;
+  }
+
+  bool _exactAlarmsRequested = false;
+  Future<void> _ensureExactAlarmsPermission() async {
+    if (_exactAlarmsRequested) return;
+    _exactAlarmsRequested = true;
+    await _svc.requestExactAlarmsOnly();
   }
 
   Future<void> update(
@@ -104,11 +116,21 @@ class NotificationController extends ChangeNotifier {
     Map<DateTime, Map<PrayerSlot, DateTime>>? prayerTimesByDay,
   }) async {
     if (!_initialized) await ensureInitialized();
-    await _svc.cancelAll();
 
     final s = _settings;
     final tone = _effectiveTone;
     final byDay = prayerTimesByDay ?? _lastPrayerByDay ?? const {};
+
+    // Request SCHEDULE_EXACT_ALARM only when we are about to schedule something.
+    // This is the right moment: user has just enabled a reminder, so the
+    // Settings page bounce is expected, not jarring at boot.
+    final wantsSchedule = (s.prayerOn && byDay.isNotEmpty) ||
+        s.studyOn || s.waterOn || s.streakOn;
+    if (wantsSchedule) {
+      unawaited(_ensureExactAlarmsPermission());
+    }
+
+    await _svc.cancelAll();
 
     if (s.prayerOn && byDay.isNotEmpty) {
       await _scheduleAllPrayers(byDay, tone);

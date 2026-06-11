@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -33,7 +33,8 @@ class AyanokojiHomeScreen extends StatelessWidget {
               ),
             ),
             child: Column(
-              children: ctrl.allStats.map(_miniStat).toList(),
+              children:
+                  ctrl.allStats.map((sv) => _miniStat(context, sv)).toList(),
             ),
           ),
           const SizedBox(height: 20),
@@ -44,26 +45,26 @@ class AyanokojiHomeScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.timer_outlined,
-                        color: AppColors.accent),
+                    Icon(Icons.timer_outlined,
+                        color: context.colors.accent),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       'Deep work timer',
                       style: TextStyle(
-                          color: AppColors.text,
+                          color: context.colors.text,
                           fontWeight: FontWeight.w700,
                           fontSize: 16),
                     ),
                     const Spacer(),
                     Text('${ctrl.focusMinutesToday}m today',
                         style:
-                            const TextStyle(color: AppColors.muted, fontSize: 12)),
+                            TextStyle(color: context.colors.muted, fontSize: 12)),
                   ],
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   '50-minute focus block. App locks back navigation — exit early forfeits Focus XP.',
-                  style: TextStyle(color: AppColors.muted, fontSize: 12),
+                  style: TextStyle(color: context.colors.muted, fontSize: 12),
                 ),
                 const SizedBox(height: 12),
                 FilledButton.icon(
@@ -88,26 +89,26 @@ class AyanokojiHomeScreen extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.psychology_outlined,
-                    color: AppColors.accent),
+                Icon(Icons.psychology_outlined,
+                    color: context.colors.accent),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Mini-games',
                           style: TextStyle(
-                              color: AppColors.text,
+                              color: context.colors.text,
                               fontWeight: FontWeight.w700,
                               fontSize: 16)),
                       Text(
                         'Digit Span · Reaction Time · Stroop',
-                        style: TextStyle(color: AppColors.muted, fontSize: 12),
+                        style: TextStyle(color: context.colors.muted, fontSize: 12),
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: AppColors.muted),
+                Icon(Icons.chevron_right, color: context.colors.muted),
               ],
             ),
           ),
@@ -120,7 +121,7 @@ class AyanokojiHomeScreen extends StatelessWidget {
     final on = ctrl.disciplineMode;
     return EliteCard(
       color: on
-          ? AppColors.accent.withValues(alpha: 0.08)
+          ? context.colors.accent.withValues(alpha: 0.08)
           : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,13 +130,13 @@ class AyanokojiHomeScreen extends StatelessWidget {
             children: [
               Icon(
                 on ? Icons.shield : Icons.shield_outlined,
-                color: on ? AppColors.accent : AppColors.muted,
+                color: on ? context.colors.accent : context.colors.muted,
               ),
               const SizedBox(width: 8),
               Text(
                 on ? 'DISCIPLINE MODE — ON' : 'Discipline mode — off',
                 style: TextStyle(
-                  color: on ? AppColors.accent : AppColors.muted,
+                  color: on ? context.colors.accent : context.colors.muted,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
                 ),
@@ -144,7 +145,7 @@ class AyanokojiHomeScreen extends StatelessWidget {
               Switch(
                 value: on,
                 onChanged: (v) => ctrl.setDisciplineMode(v),
-                activeThumbColor: AppColors.accent,
+                activeThumbColor: context.colors.accent,
               ),
             ],
           ),
@@ -153,14 +154,14 @@ class AyanokojiHomeScreen extends StatelessWidget {
             on
                 ? 'Notifications use the Discipline tone. Dashboard surfaces a penalty when goals are missed. You\'ve been warned.'
                 : 'Flip to enter strict scheduling — sharper notifications, penalty surfacing on the dashboard, no soft touch.',
-            style: const TextStyle(color: AppColors.muted, fontSize: 12),
+            style: TextStyle(color: context.colors.muted, fontSize: 12),
           ),
         ],
       ),
     );
   }
 
-  Widget _miniStat(StatValue sv) {
+  Widget _miniStat(BuildContext context, StatValue sv) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -168,8 +169,8 @@ class AyanokojiHomeScreen extends StatelessWidget {
           SizedBox(
             width: 44,
             child: Text(sv.stat.code,
-                style: const TextStyle(
-                  color: AppColors.muted,
+                style: TextStyle(
+                  color: context.colors.muted,
                   fontWeight: FontWeight.w700,
                   fontSize: 12,
                   letterSpacing: 1.2,
@@ -178,8 +179,8 @@ class AyanokojiHomeScreen extends StatelessWidget {
           SizedBox(
             width: 24,
             child: Text('${sv.level}',
-                style: const TextStyle(
-                    color: AppColors.text, fontWeight: FontWeight.w700)),
+                style: TextStyle(
+                    color: context.colors.text, fontWeight: FontWeight.w700)),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -188,8 +189,8 @@ class AyanokojiHomeScreen extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: sv.progress,
                 minHeight: 6,
-                backgroundColor: AppColors.surfaceAlt,
-                color: AppColors.accent,
+                backgroundColor: context.colors.surfaceAlt,
+                color: context.colors.accent,
               ),
             ),
           ),

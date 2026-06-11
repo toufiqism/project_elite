@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -58,7 +58,7 @@ class MiniGamesScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           const SectionHeader(title: 'Recent plays'),
-          ..._recentPlays(ctrl.gameResults.take(20)),
+          ..._recentPlays(context, ctrl.gameResults.take(20)),
         ],
       ),
     );
@@ -79,19 +79,19 @@ class MiniGamesScreen extends StatelessWidget {
           Row(
             children: [
               Text(kind.label,
-                  style: const TextStyle(
-                    color: AppColors.text,
+                  style: TextStyle(
+                    color: context.colors.text,
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
                   )),
               const Spacer(),
               Text('$xp XP earned',
-                  style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                  style: TextStyle(color: context.colors.muted, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 6),
           Text(description,
-              style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+              style: TextStyle(color: context.colors.muted, fontSize: 12)),
           const SizedBox(height: 12),
           FilledButton.icon(
             icon: const Icon(Icons.play_arrow),
@@ -103,12 +103,13 @@ class MiniGamesScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> _recentPlays(Iterable<MiniGameResult> results) {
+  List<Widget> _recentPlays(
+      BuildContext context, Iterable<MiniGameResult> results) {
     if (results.isEmpty) {
-      return const [
+      return [
         EliteCard(
           child: Text('No plays yet.',
-              style: TextStyle(color: AppColors.muted)),
+              style: TextStyle(color: context.colors.muted)),
         ),
       ];
     }
@@ -125,12 +126,12 @@ class MiniGamesScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(r.kind.label,
-                              style: const TextStyle(
-                                  color: AppColors.text,
+                              style: TextStyle(
+                                  color: context.colors.text,
                                   fontWeight: FontWeight.w600)),
                           Text(_dateShort(r.playedAt),
-                              style: const TextStyle(
-                                  color: AppColors.muted, fontSize: 12)),
+                              style: TextStyle(
+                                  color: context.colors.muted, fontSize: 12)),
                         ],
                       ),
                     ),
@@ -138,12 +139,12 @@ class MiniGamesScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(_scoreLabel(r),
-                            style: const TextStyle(
-                                color: AppColors.text,
+                            style: TextStyle(
+                                color: context.colors.text,
                                 fontWeight: FontWeight.w700)),
                         Text('+${r.xpEarned} XP',
-                            style: const TextStyle(
-                                color: AppColors.accent,
+                            style: TextStyle(
+                                color: context.colors.accent,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600)),
                       ],

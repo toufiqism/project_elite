@@ -1,4 +1,4 @@
-import 'package:fl_chart/fl_chart.dart';
+﻿import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -54,20 +54,20 @@ class StudyHomeScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Text('Today',
+                    Text('Today',
                         style: TextStyle(
-                          color: AppColors.muted,
+                          color: context.colors.muted,
                           fontWeight: FontWeight.w600,
                         )),
                     const Spacer(),
                     Text('Goal ${goalHours.toStringAsFixed(1)} h',
-                        style: const TextStyle(color: AppColors.muted)),
+                        style: TextStyle(color: context.colors.muted)),
                   ],
                 ),
                 const SizedBox(height: 10),
                 Text(formatDuration(today),
-                    style: const TextStyle(
-                      color: AppColors.text,
+                    style: TextStyle(
+                      color: context.colors.text,
                       fontSize: 36,
                       fontWeight: FontWeight.w800,
                     )),
@@ -77,22 +77,23 @@ class StudyHomeScreen extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: progress,
                     minHeight: 10,
-                    backgroundColor: AppColors.surfaceAlt,
-                    color: progress >= 1 ? AppColors.success : AppColors.accent,
+                    backgroundColor: context.colors.surfaceAlt,
+                    color: progress >= 1 ? context.colors.success : context.colors.accent,
                   ),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
-                      child: _miniStat('Week',
+                      child: _miniStat(context, 'Week',
                           '${(study.totalThisWeek().inMinutes / 60).toStringAsFixed(1)}h'),
                     ),
                     Expanded(
-                      child: _miniStat('Streak', '${study.currentStreak()} d'),
+                      child:
+                          _miniStat(context, 'Streak', '${study.currentStreak()} d'),
                     ),
                     Expanded(
-                      child: _miniStat('Sessions',
+                      child: _miniStat(context, 'Sessions',
                           '${study.sessions.where((s) => DateX.dayKey(s.startedAt) == DateX.todayKey()).length}'),
                     ),
                   ],
@@ -103,10 +104,10 @@ class StudyHomeScreen extends StatelessWidget {
           const SizedBox(height: 24),
           const SectionHeader(title: 'Start a focus session'),
           if (subjects.isEmpty)
-            const EliteCard(
+            EliteCard(
               child: Text(
                 'Add subjects in your profile to start tracking.',
-                style: TextStyle(color: AppColors.muted),
+                style: TextStyle(color: context.colors.muted),
               ),
             )
           else
@@ -126,16 +127,16 @@ class StudyHomeScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(14),
                     child: Row(
                       children: [
-                        const Icon(Icons.play_circle,
-                            color: AppColors.primary, size: 28),
+                        Icon(Icons.play_circle,
+                            color: context.colors.primary, size: 28),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             s,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: AppColors.text,
+                            style: TextStyle(
+                              color: context.colors.text,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -176,8 +177,8 @@ class StudyHomeScreen extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(
                               DateX.shortDay(days[v.toInt()]).substring(0, 1),
-                              style: const TextStyle(
-                                  color: AppColors.muted, fontSize: 11),
+                              style: TextStyle(
+                                  color: context.colors.muted, fontSize: 11),
                             ),
                           );
                         },
@@ -194,7 +195,7 @@ class StudyHomeScreen extends StatelessWidget {
                         toY: hrs,
                         width: 18,
                         borderRadius: BorderRadius.circular(6),
-                        color: AppColors.primary,
+                        color: context.colors.primary,
                       ),
                     ]);
                   }),
@@ -204,33 +205,33 @@ class StudyHomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           const SectionHeader(title: 'This week by subject'),
-          _subjectBreakdown(study.subjectTotalsThisWeek()),
+          _subjectBreakdown(context, study.subjectTotalsThisWeek()),
         ],
       ),
     );
   }
 
-  Widget _miniStat(String label, String value) {
+  Widget _miniStat(BuildContext context, String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(value,
-            style: const TextStyle(
-              color: AppColors.text,
+            style: TextStyle(
+              color: context.colors.text,
               fontSize: 17,
               fontWeight: FontWeight.w700,
             )),
         Text(label,
-            style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+            style: TextStyle(color: context.colors.muted, fontSize: 12)),
       ],
     );
   }
 
-  Widget _subjectBreakdown(Map<String, Duration> totals) {
+  Widget _subjectBreakdown(BuildContext context, Map<String, Duration> totals) {
     if (totals.isEmpty) {
-      return const EliteCard(
+      return EliteCard(
         child: Text('No sessions this week yet.',
-            style: TextStyle(color: AppColors.muted)),
+            style: TextStyle(color: context.colors.muted)),
       );
     }
     final sorted = totals.entries.toList()
@@ -249,10 +250,10 @@ class StudyHomeScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(e.key,
-                          style: const TextStyle(color: AppColors.text)),
+                          style: TextStyle(color: context.colors.text)),
                     ),
                     Text(formatDuration(e.value),
-                        style: const TextStyle(color: AppColors.muted)),
+                        style: TextStyle(color: context.colors.muted)),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -261,8 +262,8 @@ class StudyHomeScreen extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: pct,
                     minHeight: 6,
-                    backgroundColor: AppColors.surfaceAlt,
-                    color: AppColors.accent,
+                    backgroundColor: context.colors.surfaceAlt,
+                    color: context.colors.accent,
                   ),
                 ),
               ],

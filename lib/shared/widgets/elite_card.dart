@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 
 class EliteCard extends StatelessWidget {
@@ -19,9 +19,9 @@ class EliteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final card = Container(
       decoration: BoxDecoration(
-        color: color ?? AppColors.surface,
+        color: color ?? context.colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.surfaceAlt, width: 1),
+        border: Border.all(color: context.colors.surfaceAlt, width: 1),
       ),
       padding: padding,
       child: child,
@@ -57,8 +57,8 @@ class SectionHeader extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
-                color: AppColors.text,
+              style: TextStyle(
+                color: context.colors.text,
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.3,
@@ -69,7 +69,7 @@ class SectionHeader extends StatelessWidget {
             TextButton(
               onPressed: onAction,
               child: Text(action!,
-                  style: const TextStyle(color: AppColors.primary)),
+                  style: TextStyle(color: context.colors.primary)),
             ),
         ],
       ),
@@ -98,17 +98,17 @@ class StatTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: iconColor ?? AppColors.primary, size: 22),
+          Icon(icon, color: iconColor ?? context.colors.primary, size: 22),
           const SizedBox(height: 10),
           Text(value,
-              style: const TextStyle(
-                color: AppColors.text,
+              style: TextStyle(
+                color: context.colors.text,
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
               )),
           const SizedBox(height: 2),
           Text(label,
-              style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+              style: TextStyle(color: context.colors.muted, fontSize: 12)),
         ],
       ),
     );

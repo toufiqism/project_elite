@@ -72,6 +72,14 @@ android {
                 // Play Store will reject AABs signed this way.
                 signingConfigs.getByName("debug")
             }
+            // Shrinkers disabled deliberately. R8 + resource shrinking (on by
+            // default via the Flutter Gradle plugin) repeatedly broke release:
+            // stripped the notification drawable (invalid_icon) and erased Gson
+            // generic signatures flutter_local_notifications needs (TypeToken
+            // crash). Off = larger APK but no reflective/runtime-reference
+            // surprises. Re-enable only with proguard-rules.pro + res/raw/keep.xml.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

@@ -25,8 +25,6 @@ Project Elite is a self-improvement system, not another to-do app. It pulls stud
 
 ▸ **Reliable reminders** — multi-day notification scheduling, exact alarms, OEM-specific battery-killer guidance for Xiaomi, Vivo, OPPO, Huawei, Samsung. Reminders fire even if the app is closed.
 
-▸ **News** — curated Islamic news feed with built-in reader.
-
 **Privacy by design:**
 - Local-first storage. Your data lives on your phone in encrypted Hive boxes.
 - Optional Google sign-in adds cloud backup (Firestore) — your document, your data, only you can read it.
@@ -65,7 +63,7 @@ toufiqakbar@gmail.com
 (your GitHub repo URL or landing page)
 
 ## Privacy policy URL
-https://<your-github-username>.github.io/<repo>/privacy_policy
+https://toufiqism.github.io/project-elite-privacy-policy/
 
 ---
 

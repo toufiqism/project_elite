@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -46,12 +46,12 @@ class CelebrationOverlay extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: context.colors.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.accent, width: 1.5),
+            border: Border.all(color: context.colors.accent, width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: AppColors.accent.withValues(alpha: 0.3),
+                color: context.colors.accent.withValues(alpha: 0.3),
                 blurRadius: 40,
                 spreadRadius: 4,
               ),
@@ -60,13 +60,13 @@ class CelebrationOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.auto_awesome,
-                  color: AppColors.accent, size: 48),
+              Icon(Icons.auto_awesome,
+                  color: context.colors.accent, size: 48),
               const SizedBox(height: 12),
               Text(
                 levelUp ? 'Level ${ctrl.level.level}' : 'Unlocked',
-                style: const TextStyle(
-                  color: AppColors.text,
+                style: TextStyle(
+                  color: context.colors.text,
                   fontSize: 30,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.5,
@@ -76,8 +76,8 @@ class CelebrationOverlay extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   ctrl.title.toUpperCase(),
-                  style: const TextStyle(
-                    color: AppColors.accent,
+                  style: TextStyle(
+                    color: context.colors.accent,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 4,
@@ -85,12 +85,13 @@ class CelebrationOverlay extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 18),
-              if (unlocked.isNotEmpty) ...unlocked.map(_badgeTile),
+              if (unlocked.isNotEmpty)
+                ...unlocked.map((a) => _badgeTile(context, a)),
               const SizedBox(height: 18),
               FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: AppColors.background,
+                  backgroundColor: context.colors.accent,
+                  foregroundColor: context.colors.background,
                   padding: const EdgeInsets.symmetric(
                       horizontal: 32, vertical: 12),
                 ),
@@ -105,25 +106,25 @@ class CelebrationOverlay extends StatelessWidget {
     );
   }
 
-  Widget _badgeTile(Achievement a) {
+  Widget _badgeTile(BuildContext context, Achievement a) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
-          Icon(a.icon, color: AppColors.success, size: 22),
+          Icon(a.icon, color: context.colors.success, size: 22),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(a.name,
-                    style: const TextStyle(
-                      color: AppColors.text,
+                    style: TextStyle(
+                      color: context.colors.text,
                       fontWeight: FontWeight.w700,
                     )),
                 Text(a.description,
-                    style: const TextStyle(
-                        color: AppColors.muted, fontSize: 12)),
+                    style: TextStyle(
+                        color: context.colors.muted, fontSize: 12)),
               ],
             ),
           ),
