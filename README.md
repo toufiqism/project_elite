@@ -8,16 +8,17 @@ Project Elite is a single companion app that bundles the daily systems most peop
 
 - **Auth & Sync** — Google Sign-In via Firebase Auth, with per-user data isolation and Firestore-backed cloud snapshot/restore
 - **Profile & Onboarding** — name, goals, study targets, workout targets, prayer settings, location (auto-detected or manual)
-- **Dashboard** — daily 0–100 score blended from study (35%), habits (25%), prayer (20%), and fitness (20%)
+- **Dashboard** — daily 0–100 score blended from study (30%), habits (20%), prayer (20%), fitness (15%), and steps (15%); the steps pillar drops and the rest renormalize when the step sensor is unavailable
 - **Study Tracker** — flexible session logging against CA Certificate / Professional / Advance subject lists, with per-subject search and breakdown
 - **Habit Tracker** — daily checkmarks with streaks and weekly heatmaps
 - **Prayer System** — AlAdhan REST API for timings with offline fallback (Karachi method, Hanafi madhab), per-prayer manual overrides, qibla compass, duas
 - **Fitness** — ExerciseDB-backed exercise library with name search and YouTube how-to links, live workout sessions, workout history, and weight tracking with trend chart
+- **Steps** — daily step counting from the device step sensor (pedometer), step goal set at onboarding (default 10,000) and editable in Settings; feeds strength XP and the daily score, with a 7-day chart and all-time total
 - **Islamic Utilities** — Hijri date, duas, tasbih counter, qibla direction
 - **Ayanokoji Mode** — discipline gamification hub: focus timer, character stats (radar), and cognitive mini-games (Digit Span, Reaction Time, Stroop)
 - **Gamification** — global XP and levels consolidated through Ayanokoji character stats, achievement titles ("Mastermind", "Elite", …), level-up celebration overlay
 - **Reports** — weekly and monthly activity summaries, shareable via the system share sheet
-- **Notifications** — local reminders scheduled by timezone, with edge-to-edge system UI
+- **Notifications** — local reminders scheduled by timezone (prayer, study, water, walk/steps, streak), each with a customizable time or window, plus edge-to-edge system UI
 - **Theming** — light / dark / system theme, switchable in Settings → Appearance
 
 The full product spec is in `Project Elite App Overview.pdf` at the repo root.
@@ -31,6 +32,7 @@ The full product spec is in `Project Elite App Overview.pdf` at the repo root.
 - **firebase_crashlytics** for crash reporting
 - **adhan** for offline prayer fallback; **http** for the AlAdhan REST API and ExerciseDB
 - **geolocator** + **geocoding** + **permission_handler** for location auto-detection and reverse geocoding
+- **pedometer** for daily step counting from the hardware STEP_COUNTER sensor
 - **hijri** for the Islamic calendar, **flutter_compass** for qibla direction
 - **fl_chart** for analytics (dashboard, reports, weight trend)
 - **flutter_local_notifications** + **timezone** + **flutter_timezone** for scheduled reminders
@@ -90,6 +92,7 @@ lib/
 │   ├── habits/           # daily check-ins
 │   ├── prayer/           # AlAdhan REST + offline fallback, manual overrides
 │   ├── fitness/          # ExerciseDB library, workout sessions/history, weight tracking
+│   ├── steps/            # pedometer step counting, daily/7-day/all-time, steps screen
 │   ├── islamic/          # Hijri, duas, qibla, tasbih
 │   ├── ayanokoji/        # focus timer, character stats (XP source), mini-games
 │   ├── gamification/     # levels, titles, celebration overlay (computed from Ayanokoji stats)
@@ -107,7 +110,8 @@ Each feature exposes models, a `ChangeNotifier` controller, and screens. Cross-f
 
 - **Hive without codegen** — models are plain Dart classes; controllers store `model.toJson()` and read back with `Map<String, dynamic>.from(...)` (Hive returns `Map<dynamic, dynamic>`).
 - **Time-series pattern** — daily booleans are keyed as composite strings, e.g. habit logs use `'$habitId|${DateX.dayKey(day)}'` and prayer logs use `'${DateX.dayKey(day)}|${slot.name}'`. Reuse this for any new daily-tracked metric.
-- **Daily score weights** sum to 1.0 (study 0.35, habits 0.25, prayer 0.20, fitness 0.20). If new pillars are added, rebalance.
+- **Daily score weights** sum to 1.0 (study 0.30, habits 0.20, prayer 0.20, fitness 0.15, steps 0.15). The dashboard computes the score as a weighted fold over *available* pillars divided by the sum of their weights, so when the step sensor is unavailable the steps pillar drops and the remaining four renormalize to 1.0. If new pillars are added, keep them summing to 1.0.
+- **Steps** are read from the hardware step sensor via `pedometer` (cumulative-since-boot). `StepController` reconciles by delta-accumulation into the `stepLog` Hive box keyed by day, treats a negative delta as a reboot, and exposes `available` (permission granted + sensor present). All-time steps feed the Ayanokoji `strength` stat (`+ allTimeSteps ~/ 100`, uncapped) which flows into total XP. Requires `ACTIVITY_RECOGNITION` (Android) / `NSMotionUsageDescription` (iOS).
 - **Theming** — colors are read via the `context.colors.<token>` extension (`lib/core/theme/palette.dart`), backed by two `Palette` instances (`lightPalette` / `darkPalette`) selected by `Theme.of(context).brightness`. There is no static `AppColors` class. `ThemeController` owns light/dark/system and persists it to the Hive `settings` box; system bar icon brightness flips with the theme via `AnnotatedRegion` in `main.dart`. A widget holding a `context.colors.X` value cannot be `const`, and helpers/`CustomPainter`s that build colored UI take a `BuildContext` (or the colors) as a parameter.
 - **PrayerController** is wired through `ChangeNotifierProxyProvider` because it depends on the profile's saved prayer address; `AyanokojiController`, `NotificationController`, and `GamificationController` are similarly proxy-wired so they can recompute when upstream controllers change.
 - **Per-user data isolation** — on auth state change, if the signed-in uid differs from `last_uid` in the settings box, user-scoped Hive boxes are cleared and a cloud snapshot (if present) is restored via `SyncService`. This keeps multiple Google accounts cleanly separated on the same device.

@@ -4,6 +4,62 @@ Running log of changes made by Claude across sessions. Newest entries at top.
 
 ---
 
+## 2026-06-11
+
+### Walk / step reminder with a customizable window
+
+User wanted a notification nudging them to walk and grow their step count, with a user-customizable time window. Implemented as a direct sibling of the existing water reminder (periodic nudges across a `[startHour, endHour]` window), independent of the step sensor — it's a scheduled nudge, not a conditional alert.
+
+**Changes:**
+- `lib/features/notifications/models/notification_settings.dart`: added `walkOn`, `walkStartHour` (default 9), `walkEndHour` (default 21), `walkEverySeconds` (default 10800 = 3h) across constructor, `defaults()`, `copyWith`, `toJson`, `fromJson` (with safe defaults so existing users upgrade cleanly).
+- `lib/features/notifications/service/notification_service.dart`: new `elite_walk` channel added to `NotificationChannels` + `all`.
+- `lib/features/notifications/state/notification_controller.dart`: new ID partition `5000-5099` (`walkSlot(i)`); `_scheduleWalk` mirrors `_scheduleWater`, scheduling a daily reminder at each interval across the window; wired into `reschedule` and the `wantsSchedule` exact-alarm gate; `_Pack.walk` with copy for all three tones (motivational/discipline/silent). Respects the discipline-mode tone override like every other reminder.
+- `lib/features/settings/screens/settings_screen.dart`: "Walk / steps" toggle in *Which reminders*; "Walk reminder window" start/end picker in *Timing*. Generalized `_hourRangeRow` to take a `label` (was hardcoded "Water reminder window").
+
+`flutter analyze` clean (9 pre-existing info/warning lints, none new).
+
+### Step counting feature (sensor → XP + dashboard pillar)
+
+User wanted to count daily steps, feed them into XP, set a step goal at onboarding (default 10,000), and let existing users set it in Settings. Design was grilled first; key decisions: pedometer hardware sensor (not Health Connect — too heavy for Play review), **uncapped** strength XP (user override of a capped recommendation), steps as a **5th dashboard pillar** that renormalizes the other four when the sensor is unavailable so denial doesn't penalize the score.
+
+**Changes:**
+- New feature module `lib/features/steps/`:
+  - `state/step_controller.dart` — subscribes to `pedometer`'s `stepCountStream`. The sensor only reports cumulative-since-boot, so reconciliation is delta-accumulation: add positive deltas to today's tally in the `stepLog` Hive box (keyed by `DateX.dayKey`), treat a negative delta as a reboot (re-anchor), ignore absurd jumps (>60k). `available` flips true on the first reading; false on stream error / denied permission. Constructor subscribes silently only if the permission was already granted; `requestAndStart()` prompts.
+  - `screens/steps_screen.dart` — today ring, 7-day `fl_chart` bar chart, all-time total, and a grant-permission empty state.
+- `lib/core/storage/hive_setup.dart`: new `stepLog` box (`box_step_log`), opened at startup.
+- `lib/features/profile/models/user_profile.dart`: new `stepGoalPerDay` (int, default 10000; `fromJson` defaults missing → 10000 for upgraders) across all serialization paths.
+- `lib/features/ayanokoji/state/ayanokoji_controller.dart`: `recompute` takes a `StepController`; `strength` stat formula gains `+ allTimeSteps ~/ 100` (uncapped). Flows to total XP/level automatically via `XpRules.totalFor`.
+- `lib/main.dart`: registered `StepController`; Ayanokoji proxy upgraded `ProxyProvider4 → ProxyProvider5`; `stepLog` added to the user-box wipe list on account switch + reloaded on login.
+- `lib/features/sync/service/sync_service.dart` and `settings_screen.dart`: `stepLog` added to the cloud-backup list and the delete-account wipe list.
+- `lib/features/dashboard/screens/dashboard_screen.dart`: daily score reworked from fixed 4-pillar weights to a weighted-list fold (study .30 / habits .20 / prayer .20 / fitness .15 / steps .15) divided by the sum of *available* weights — so when steps are unavailable the remaining four renormalize to 1.0. Added a Steps card (today/goal ring → StepsScreen), a Steps daily-score mini-bar (only when available), and wired the "Walk N steps" plan item to real data.
+- `lib/features/profile/screens/onboarding_screen.dart`: step-goal field on the lifestyle page; the activity-recognition permission is requested inline as the user leaves that page.
+- `lib/features/settings/screens/settings_screen.dart`: new "Steps" section — goal editor dialog + an "Enable step counting" button when the sensor is off.
+- `lib/features/fitness/screens/fitness_home_screen.dart`: Steps action added to the AppBar.
+- `android/.../AndroidManifest.xml`: `ACTIVITY_RECOGNITION` (+ legacy `com.google.android.gms` variant). `ios/Runner/Info.plist`: `NSMotionUsageDescription`.
+- `pubspec.yaml`: `pedometer: ^4.0.2` (resolved 4.2.0).
+
+`flutter analyze` clean (9 pre-existing lints, none from this feature). Verified on a Realme RMX3760 in release AOT: installs, runs, ACTIVITY_RECOGNITION granted, no crash.
+
+**Follow-ups for shipping:** Play data-safety form must declare Health & fitness / physical-activity data (on-device only). Universal release APK grew to ~63MB (pedometer native libs across ABIs); the Play AAB still splits per-device so user downloads stay small.
+
+### Version bump → 1.1.0+11
+
+`pubspec.yaml` version bumped `1.0.0+10 → 1.1.0+11` (minor, since light/dark theming is a user-facing feature) and a release AAB was built for Play. README release-notes line updated to match.
+
+---
+
+## 2026-06-09
+
+### Light / dark theming
+
+Added full light/dark/system theme support. Replaced the static `AppColors` class with a `context.colors.<token>` BuildContext extension backed by two `Palette` instances selected by `Theme.of(context).brightness`; migrated ~540 color references across ~28 files. `ThemeController` owns light/dark/system, persisted to the Hive `settings` box, driving `MaterialApp.themeMode`. System status/nav bar icon brightness flips with the resolved theme via `AnnotatedRegion` in `main.dart`; the native splash stays navy (renders pre-Flutter). Toggle lives in Settings → Appearance.
+
+**Default rule:** missing `theme_mode` → existing installs (any prior Hive data / `last_uid`) default to **dark** to avoid surprising the closed-testing cohort mid-cycle; genuinely fresh installs follow `system`. Consequence for new UI: any widget holding a `context.colors.X` value can't be `const`, and helpers / `CustomPainter`s that build colored UI must take a `BuildContext` (or the colors) as a parameter.
+
+`flutter analyze` clean; verified in release AOT on the Realme device.
+
+---
+
 ## 2026-05-22
 
 ### Follow-up: notification reliability fixes for OPPO/Vivo + pending-count diagnostic
