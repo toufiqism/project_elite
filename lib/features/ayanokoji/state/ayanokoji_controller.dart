@@ -7,6 +7,7 @@ import '../../../core/utils/date_utils.dart';
 import '../../fitness/state/fitness_controller.dart';
 import '../../habits/state/habit_controller.dart';
 import '../../prayer/state/prayer_controller.dart';
+import '../../steps/state/step_controller.dart';
 import '../../study/state/study_controller.dart';
 import '../models/character_stats.dart';
 import '../models/focus_session.dart';
@@ -37,6 +38,7 @@ class AyanokojiController extends ChangeNotifier {
   int _prayerCompletions = 0;
   int _workoutMinutes = 0;
   int _workoutSessions = 0;
+  int _stepsAllTime = 0;
   int _bestStreak = 0;
 
   AyanokojiController() {
@@ -157,7 +159,9 @@ class AyanokojiController extends ChangeNotifier {
     required HabitController habits,
     required PrayerController prayer,
     required FitnessController fitness,
+    required StepController steps,
   }) {
+    _stepsAllTime = steps.allTimeSteps;
     _studyMinutes = study.sessions
             .fold<int>(0, (a, s) => a + s.durationSeconds) ~/
         60;
@@ -228,7 +232,7 @@ class AyanokojiController extends ChangeNotifier {
       CharacterStat.discipline:
           _habitCompletions * 5 + _prayerCompletions * 4,
       CharacterStat.strength:
-          _workoutMinutes * 2 + _workoutSessions * 30,
+          _workoutMinutes * 2 + _workoutSessions * 30 + _stepsAllTime ~/ 100,
       CharacterStat.focus: focusMinutesTotal * 2 + reactionTimeXp,
       CharacterStat.consistency: _bestStreak * 10,
       CharacterStat.social: socialRatingSum * 5,

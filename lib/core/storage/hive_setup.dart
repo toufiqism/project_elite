@@ -15,6 +15,7 @@ class HiveBoxes {
   static const socialRatings = 'box_social_ratings';
   static const gameResults = 'box_game_results';
   static const tasbih = 'box_tasbih';
+  static const stepLog = 'box_step_log';
 }
 
 class HiveSetup {
@@ -35,6 +36,7 @@ class HiveSetup {
       Hive.openBox(HiveBoxes.socialRatings),
       Hive.openBox(HiveBoxes.gameResults),
       Hive.openBox(HiveBoxes.tasbih),
+      Hive.openBox(HiveBoxes.stepLog),
     ]);
   }
 }

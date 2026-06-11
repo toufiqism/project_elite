@@ -27,6 +27,7 @@ import 'features/notifications/state/notification_controller.dart';
 import 'features/prayer/state/prayer_controller.dart';
 import 'features/profile/screens/onboarding_screen.dart';
 import 'features/profile/state/profile_controller.dart';
+import 'features/steps/state/step_controller.dart';
 import 'features/study/state/study_controller.dart';
 import 'firebase_options.dart';
 import 'main_shell.dart';
@@ -87,6 +88,7 @@ class ProjectEliteApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => StudyController()),
         ChangeNotifierProvider(create: (_) => HabitController()),
         ChangeNotifierProvider(create: (_) => FitnessController()),
+        ChangeNotifierProvider(create: (_) => StepController()),
         ChangeNotifierProvider(create: (_) => TasbihController()),
         ChangeNotifierProxyProvider<ProfileController, PrayerController>(
           create: (_) => PrayerController(),
@@ -96,16 +98,18 @@ class ProjectEliteApp extends StatelessWidget {
             return ctrl;
           },
         ),
-        ChangeNotifierProxyProvider4<StudyController, HabitController,
-            PrayerController, FitnessController, AyanokojiController>(
+        ChangeNotifierProxyProvider5<StudyController, HabitController,
+            PrayerController, FitnessController, StepController,
+            AyanokojiController>(
           create: (_) => AyanokojiController(),
-          update: (_, study, habits, prayer, fitness, ayano) {
+          update: (_, study, habits, prayer, fitness, steps, ayano) {
             final ctrl = ayano ?? AyanokojiController();
             ctrl.recompute(
               study: study,
               habits: habits,
               prayer: prayer,
               fitness: fitness,
+              steps: steps,
             );
             return ctrl;
           },
@@ -229,6 +233,7 @@ class _RootState extends State<_Root> {
         HiveBoxes.socialRatings,
         HiveBoxes.gameResults,
         HiveBoxes.tasbih,
+        HiveBoxes.stepLog,
       ];
       for (final name in userBoxes) {
         await Hive.box(name).clear();
@@ -249,6 +254,7 @@ class _RootState extends State<_Root> {
     context.read<StudyController>().reload();
     context.read<HabitController>().reload();
     context.read<FitnessController>().reload();
+    context.read<StepController>().reload();
     context.read<TasbihController>().reload();
 
     if (mounted) setState(() { _sessionReady = true; _handledUid = uid; });

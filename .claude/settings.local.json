@@ -71,7 +71,9 @@
       "Bash(find build/app/intermediates -ipath \"*not-compiled*\" -iname \"*ic_stat*\")",
       "Bash(grep -iB1 -A1 \"ic_stat_notification\")",
       "PowerShell($apk = \"D:\\\\Projects\\\\project_elite\\\\build\\\\app\\\\outputs\\\\flutter-apk\\\\app-release.apk\"; $bt = Get-ChildItem \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\build-tools\" -Directory | Sort-Object Name -Descending | Select-Object -First 1; $aapt2 = Join-Path $bt.FullName \"aapt2.exe\"; & $aapt2 dump resources $apk 2>&1 | Select-String \"drawable/ic_stat_notification\")",
-      "PowerShell(cd D:\\\\Projects\\\\project_elite; Get-Content D:\\\\Projects\\\\project_elite\\\\_analyze.txt | Where-Object { $_ -match '\\\\sinfo\\\\s-' })"
+      "PowerShell(cd D:\\\\Projects\\\\project_elite; Get-Content D:\\\\Projects\\\\project_elite\\\\_analyze.txt | Where-Object { $_ -match '\\\\sinfo\\\\s-' })",
+      "Bash(Select-String -Pattern \"error|warning|info|issues found|No issues\")",
+      "Bash(Select-Object -First 60)"
     ]
   }
 }

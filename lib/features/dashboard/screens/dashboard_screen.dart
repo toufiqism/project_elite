@@ -15,6 +15,8 @@ import '../../prayer/state/prayer_controller.dart';
 import '../../profile/models/user_profile.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../profile/state/profile_controller.dart';
+import '../../steps/screens/steps_screen.dart';
+import '../../steps/state/step_controller.dart';
 import '../../study/state/study_controller.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -46,6 +48,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final habits = context.watch<HabitController>();
     final prayer = context.watch<PrayerController>();
     final fitness = context.watch<FitnessController>();
+    final steps = context.watch<StepController>();
     final gam = context.watch<GamificationController>();
     final ayano = context.watch<AyanokojiController>();
 
@@ -65,13 +68,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .clamp(0.0, 1.0)
         .toDouble();
 
-    // Weights sum to 1.0 — see CLAUDE.md daily-score invariant.
-    final dailyScore = ((studyPct * 0.35 +
-                habitPct * 0.25 +
-                prayerPct * 0.2 +
-                fitnessPct * 0.2) *
-            100)
-        .round();
+    final stepGoal = p?.stepGoalPerDay ?? 10000;
+    final todaySteps = steps.todaySteps;
+    final stepsAvailable = steps.available;
+    final stepPct = (todaySteps / stepGoal).clamp(0.0, 1.0).toDouble();
+
+    // Weighted pillars (sum to 1.0 with steps available). When the step sensor
+    // is unavailable we drop the steps pillar and renormalize the rest, so a
+    // user without the permission/sensor isn't penalized. See CLAUDE.md.
+    final pillars = <(double, double)>[
+      (0.30, studyPct),
+      (0.20, habitPct),
+      (0.20, prayerPct),
+      (0.15, fitnessPct),
+      if (stepsAvailable) (0.15, stepPct),
+    ];
+    final weightSum = pillars.fold<double>(0, (a, e) => a + e.$1);
+    final dailyScore =
+        (pillars.fold<double>(0, (a, e) => a + e.$1 * e.$2) / weightSum * 100)
+            .round();
 
     final nextSlot = prayer.nextSlot();
     final nextTime = nextSlot == null ? null : prayer.timeOf(nextSlot);
@@ -156,7 +171,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           _xpHeroCard(context, gam),
           const SizedBox(height: 14),
-          _dailyScoreCard(dailyScore, studyPct, habitPct, prayerPct, fitnessPct),
+          _dailyScoreCard(dailyScore, studyPct, habitPct, prayerPct, fitnessPct,
+              stepPct, stepsAvailable),
           const SizedBox(height: 20),
           const SectionHeader(title: 'Today'),
           Row(
@@ -204,6 +220,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 14),
+          _stepsCard(context, steps, todaySteps, stepGoal),
           const SizedBox(height: 24),
           if (nextSlot != null && nextTime != null) ...[
             const SectionHeader(title: 'Next prayer'),
@@ -232,7 +250,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 24),
           ],
           const SectionHeader(title: 'Today\'s plan'),
-          _planList(context, p, study, habits, prayer, fitness),
+          _planList(context, p, study, habits, prayer, fitness, todaySteps,
+              stepGoal),
         ],
       ),
     );
@@ -335,7 +354,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _dailyScoreCard(int score, double sP, double hP, double pP, double fP) {
+  Widget _dailyScoreCard(int score, double sP, double hP, double pP, double fP,
+      double stepP, bool stepsAvailable) {
     String title;
     if (score >= 85) {
       title = 'Elite day';
@@ -388,6 +408,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _miniBar('Prayer', pP, context.colors.accent),
           const SizedBox(height: 6),
           _miniBar('Fitness', fP, context.colors.warning),
+          if (stepsAvailable) ...[
+            const SizedBox(height: 6),
+            _miniBar('Steps', stepP, context.colors.primary),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _stepsCard(
+      BuildContext context, StepController steps, int today, int goal) {
+    final pct = (today / goal).clamp(0.0, 1.0).toDouble();
+    return EliteCard(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const StepsScreen()),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.directions_walk, color: context.colors.primary),
+              const SizedBox(width: 10),
+              Text('Steps',
+                  style: TextStyle(
+                    color: context.colors.text,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  )),
+              const Spacer(),
+              if (steps.available)
+                Text('$today / $goal',
+                    style: TextStyle(
+                        color: context.colors.muted,
+                        fontWeight: FontWeight.w600))
+              else
+                Text('Tap to enable',
+                    style: TextStyle(
+                        color: context.colors.accent,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12)),
+            ],
+          ),
+          if (steps.available) ...[
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: pct,
+                minHeight: 7,
+                backgroundColor: context.colors.surfaceAlt,
+                color: context.colors.primary,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -430,6 +505,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     HabitController habits,
     PrayerController prayer,
     FitnessController fitness,
+    int todaySteps,
+    int stepGoal,
   ) {
     final goalHours = profile?.studyGoalHoursPerDay ?? 5;
     final workoutMin = profile?.workoutGoalMinutesPerDay ?? 30;
@@ -471,8 +548,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       _PlanItem(
         icon: Icons.directions_walk,
-        text: 'Walk 6,000 steps',
-        done: false,
+        text: 'Walk $stepGoal steps',
+        done: todaySteps >= stepGoal,
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const StepsScreen()),
+        ),
       ),
     ];
     return EliteCard(

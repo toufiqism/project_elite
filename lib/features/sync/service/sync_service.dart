@@ -18,6 +18,7 @@ const _syncedBoxes = [
   HiveBoxes.socialRatings,
   HiveBoxes.gameResults,
   HiveBoxes.tasbih,
+  HiveBoxes.stepLog,
 ];
 
 const _kTimeout = Duration(seconds: 15);

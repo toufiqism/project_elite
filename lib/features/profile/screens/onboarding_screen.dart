@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/ca_subjects.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../features/auth/state/auth_controller.dart';
+import '../../steps/state/step_controller.dart';
 import '../models/user_profile.dart';
 import '../state/profile_controller.dart';
 
@@ -40,6 +41,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _sleep = TextEditingController(text: '11 PM - 6 AM');
   final _studyGoal = TextEditingController(text: '5');
   final _workoutGoal = TextEditingController(text: '30');
+  final _stepGoal = TextEditingController(text: '10000');
   int _stress = 3;
   final _water = TextEditingController(text: '3');
   bool _prayerOn = true;
@@ -58,6 +60,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _sleep.dispose();
     _studyGoal.dispose();
     _workoutGoal.dispose();
+    _stepGoal.dispose();
     _water.dispose();
     super.dispose();
   }
@@ -140,6 +143,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       sleepSchedule: _sleep.text.trim(),
       studyGoalHoursPerDay: double.tryParse(_studyGoal.text) ?? 5,
       workoutGoalMinutesPerDay: double.tryParse(_workoutGoal.text) ?? 30,
+      stepGoalPerDay: int.tryParse(_stepGoal.text) ?? 10000,
       stressLevel: _stress,
       waterGoalLiters: double.tryParse(_water.text) ?? 3,
       prayerRemindersOn: _prayerOn,
@@ -206,8 +210,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   const Spacer(),
                   FilledButton(
-                    onPressed: () {
-                      if (_validateCurrentPage()) _next();
+                    onPressed: () async {
+                      if (!_validateCurrentPage()) return;
+                      // Lifestyle page (index 2) holds the step goal — ask for
+                      // the activity-recognition permission as the user leaves it.
+                      if (_page == 2) {
+                        await context.read<StepController>().requestAndStart();
+                      }
+                      if (mounted) _next();
                     },
                     child: Text(_page == _totalPages - 1 ? 'Begin' : 'Next'),
                   ),
@@ -442,10 +452,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ]),
         const SizedBox(height: 12),
-        TextField(
-          controller: _water,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'Water goal (liters)'),
+        Row(children: [
+          Expanded(
+            child: TextField(
+              controller: _water,
+              keyboardType: TextInputType.number,
+              decoration:
+                  const InputDecoration(labelText: 'Water goal (liters)'),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: _stepGoal,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Steps / day'),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 6),
+        Text(
+          'We count steps from your device sensor — you\'ll be asked for '
+          'permission next.',
+          style: TextStyle(color: context.colors.muted, fontSize: 12),
         ),
         const SizedBox(height: 16),
         Text('Stress level', style: TextStyle(color: context.colors.muted)),

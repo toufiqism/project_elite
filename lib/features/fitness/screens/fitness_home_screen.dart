@@ -7,6 +7,7 @@ import '../../../core/utils/date_utils.dart';
 import '../../../shared/widgets/elite_card.dart';
 import '../../profile/state/profile_controller.dart';
 import '../../settings/screens/settings_screen.dart';
+import '../../steps/screens/steps_screen.dart';
 import '../models/workout_plan.dart';
 import '../state/fitness_controller.dart';
 import 'weight_screen.dart';
@@ -44,6 +45,14 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
       appBar: AppBar(
         title: const Text('Fitness'),
         actions: [
+          IconButton(
+            tooltip: 'Steps',
+            icon: const Icon(Icons.directions_walk),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const StepsScreen()),
+            ),
+          ),
           IconButton(
             tooltip: 'Weight',
             icon: const Icon(Icons.monitor_weight_outlined),

@@ -27,6 +27,9 @@ dependencies:
   geolocator: ^13.0.1
   permission_handler: ^11.3.1
 
+  # Step counting (hardware STEP_COUNTER sensor)
+  pedometer: ^4.0.2
+
   # Utilities
   intl: ^0.20.1
   uuid: ^4.5.1

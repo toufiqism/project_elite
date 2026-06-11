@@ -16,6 +16,7 @@ class UserProfile {
   final String sleepSchedule;
   final double studyGoalHoursPerDay;
   final double workoutGoalMinutesPerDay;
+  final int stepGoalPerDay;
   final int stressLevel; // 1..5
   final double waterGoalLiters;
   final bool prayerRemindersOn;
@@ -43,6 +44,7 @@ class UserProfile {
     required this.sleepSchedule,
     required this.studyGoalHoursPerDay,
     required this.workoutGoalMinutesPerDay,
+    this.stepGoalPerDay = 10000,
     required this.stressLevel,
     required this.waterGoalLiters,
     required this.prayerRemindersOn,
@@ -75,6 +77,7 @@ class UserProfile {
     String? sleepSchedule,
     double? studyGoalHoursPerDay,
     double? workoutGoalMinutesPerDay,
+    int? stepGoalPerDay,
     int? stressLevel,
     double? waterGoalLiters,
     bool? prayerRemindersOn,
@@ -100,6 +103,7 @@ class UserProfile {
       studyGoalHoursPerDay: studyGoalHoursPerDay ?? this.studyGoalHoursPerDay,
       workoutGoalMinutesPerDay:
           workoutGoalMinutesPerDay ?? this.workoutGoalMinutesPerDay,
+      stepGoalPerDay: stepGoalPerDay ?? this.stepGoalPerDay,
       stressLevel: stressLevel ?? this.stressLevel,
       waterGoalLiters: waterGoalLiters ?? this.waterGoalLiters,
       prayerRemindersOn: prayerRemindersOn ?? this.prayerRemindersOn,
@@ -127,6 +131,7 @@ class UserProfile {
         'sleepSchedule': sleepSchedule,
         'studyGoalHoursPerDay': studyGoalHoursPerDay,
         'workoutGoalMinutesPerDay': workoutGoalMinutesPerDay,
+        'stepGoalPerDay': stepGoalPerDay,
         'stressLevel': stressLevel,
         'waterGoalLiters': waterGoalLiters,
         'prayerRemindersOn': prayerRemindersOn,
@@ -155,6 +160,7 @@ class UserProfile {
             (json['studyGoalHoursPerDay'] as num).toDouble(),
         workoutGoalMinutesPerDay:
             (json['workoutGoalMinutesPerDay'] as num).toDouble(),
+        stepGoalPerDay: (json['stepGoalPerDay'] as num?)?.toInt() ?? 10000,
         stressLevel: (json['stressLevel'] as num).toInt(),
         waterGoalLiters: (json['waterGoalLiters'] as num).toDouble(),
         prayerRemindersOn: json['prayerRemindersOn'] as bool,

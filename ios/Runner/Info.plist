@@ -19,6 +19,8 @@
 		<string>Project Elite needs your location to compute accurate prayer times.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 		<string>Project Elite needs your location to compute accurate prayer times.</string>
+		<key>NSMotionUsageDescription</key>
+		<string>Project Elite uses motion data to count your daily steps toward your goal and strength XP.</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>

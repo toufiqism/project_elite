@@ -15,7 +15,9 @@ import '../../notifications/models/notification_settings.dart';
 import '../../notifications/service/notification_service.dart';
 import '../../notifications/state/notification_controller.dart';
 import '../../prayer/state/prayer_controller.dart';
+import '../../profile/models/user_profile.dart';
 import '../../profile/state/profile_controller.dart';
+import '../../steps/state/step_controller.dart';
 import '../../study/state/study_controller.dart';
 import '../../sync/service/sync_service.dart';
 
@@ -47,6 +49,9 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 24),
           const SectionHeader(title: 'Fitness API'),
           _apiKeyCard(context, fitness),
+          const SizedBox(height: 24),
+          const SectionHeader(title: 'Steps'),
+          _stepsCard(context),
           const SizedBox(height: 24),
           const SectionHeader(title: 'Notification tone'),
           _toneSelector(context, s.tone, (t) => apply(s.copyWith(tone: t))),
@@ -88,6 +93,16 @@ class SettingsScreen extends StatelessWidget {
                 _divider(context),
                 _toggle(
                   context,
+                  icon: Icons.directions_walk,
+                  title: 'Walk / steps',
+                  subtitle:
+                      'Nudge to move between ${_fmtHour(s.walkStartHour)} and ${_fmtHour(s.walkEndHour)}',
+                  value: s.walkOn,
+                  onChanged: (v) => apply(s.copyWith(walkOn: v)),
+                ),
+                _divider(context),
+                _toggle(
+                  context,
                   icon: Icons.local_fire_department,
                   title: "Don't break the streak",
                   subtitle:
@@ -114,11 +129,23 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 _hourRangeRow(
                   context,
+                  label: 'Water reminder window',
                   startHour: s.waterStartHour,
                   endHour: s.waterEndHour,
                   onPicked: (start, end) => apply(s.copyWith(
                     waterStartHour: start,
                     waterEndHour: end,
+                  )),
+                ),
+                const SizedBox(height: 12),
+                _hourRangeRow(
+                  context,
+                  label: 'Walk reminder window',
+                  startHour: s.walkStartHour,
+                  endHour: s.walkEndHour,
+                  onPicked: (start, end) => apply(s.copyWith(
+                    walkStartHour: start,
+                    walkEndHour: end,
                   )),
                 ),
                 const SizedBox(height: 12),
@@ -310,6 +337,7 @@ class SettingsScreen extends StatelessWidget {
         HiveBoxes.socialRatings,
         HiveBoxes.gameResults,
         HiveBoxes.tasbih,
+        HiveBoxes.stepLog,
       ];
       for (final name in userBoxes) {
         await Hive.box(name).clear();
@@ -408,6 +436,104 @@ class SettingsScreen extends StatelessWidget {
             selected: {themeCtrl.mode},
             onSelectionChanged: (sel) => themeCtrl.setMode(sel.first),
             showSelectedIcon: false,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepsCard(BuildContext context) {
+    final steps = context.watch<StepController>();
+    final profile = context.watch<ProfileController>().profile;
+    final goal = profile?.stepGoalPerDay ?? 10000;
+    return EliteCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.directions_walk,
+                  color: steps.available
+                      ? context.colors.success
+                      : context.colors.accent),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Daily step goal',
+                        style: TextStyle(
+                            color: context.colors.text,
+                            fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Text(
+                      steps.available
+                          ? '$goal steps · counting active'
+                          : '$goal steps · sensor off',
+                      style: TextStyle(
+                          color: context.colors.muted, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () => _showStepGoalDialog(context, profile),
+                child: const Text('Change'),
+              ),
+            ],
+          ),
+          if (!steps.available) ...[
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () async {
+                final ok = await steps.requestAndStart();
+                if (!ok && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          'Permission denied or no step sensor available.'),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.bolt, size: 18),
+              label: const Text('Enable step counting'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showStepGoalDialog(BuildContext context, UserProfile? profile) {
+    if (profile == null) return;
+    final ctrl =
+        TextEditingController(text: profile.stepGoalPerDay.toString());
+    showDialog(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: context.colors.surface,
+        title: const Text('Daily step goal'),
+        content: TextField(
+          controller: ctrl,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: const InputDecoration(suffixText: 'steps'),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(dctx),
+              child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () async {
+              final v = int.tryParse(ctrl.text);
+              if (v == null || v <= 0) return;
+              await context
+                  .read<ProfileController>()
+                  .update((p) => p.copyWith(stepGoalPerDay: v));
+              if (dctx.mounted) Navigator.pop(dctx);
+            },
+            child: const Text('Save'),
           ),
         ],
       ),
@@ -632,6 +758,7 @@ class SettingsScreen extends StatelessWidget {
 
   Widget _hourRangeRow(
     BuildContext context, {
+    required String label,
     required int startHour,
     required int endHour,
     required void Function(int start, int end) onPicked,
@@ -639,7 +766,7 @@ class SettingsScreen extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text('Water reminder window',
+          child: Text(label,
               style: TextStyle(color: context.colors.muted)),
         ),
         TextButton(
