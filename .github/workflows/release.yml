@@ -1,0 +1,46 @@
+name: Play Internal Release
+
+on:
+  workflow_dispatch:        # manual trigger from the Actions tab
+  push:
+    branches: ['release']   # auto-release on push to this branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Restore keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/upload-keystore.jks
+
+      - name: Write key.properties
+        run: |
+          cat > android/key.properties <<EOF
+          storeFile=upload-keystore.jks
+          storePassword=${{ secrets.STORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          EOF
+
+      - run: flutter pub get
+
+      - run: flutter test    # remove this line if the suite isn't green
+
+      - name: Build AAB
+        # run_number + 100 keeps versionCode above the current live build (11)
+        run: flutter build appbundle --release --build-number=$(( ${{ github.run_number }} + 100 ))
+
+      - name: Upload to Play internal
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.toufiq.elite.project_elite
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
