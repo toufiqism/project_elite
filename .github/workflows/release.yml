@@ -44,3 +44,4 @@ jobs:
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
           track: internal
           status: completed
+          healthyAppWorkPolicy: "WORKING_WITH_HEALTH_OR_SENSITIVE_CATEGORIES"
