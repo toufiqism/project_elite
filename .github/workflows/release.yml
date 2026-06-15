@@ -45,7 +45,3 @@ jobs:
           track: internal
           status: completed
           inAppUpdatePriority: 5
-          # Commit the edit without auto-sending for review. Works around the
-          # Play API "You must let us know whether your app includes any health
-          # features" commit error; internal track needs no review anyway.
-          changesNotSentForReview: true
