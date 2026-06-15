@@ -45,3 +45,4 @@ jobs:
           track: internal
           status: completed
           inAppUpdatePriority: 5
+          healthFeatures: '["health"]'
