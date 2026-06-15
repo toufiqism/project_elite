@@ -33,8 +33,8 @@ jobs:
       - run: flutter test    # remove this line if the suite isn't green
 
       - name: Build AAB
-        # run_number + 100 keeps versionCode above the current live build (11)
-        run: flutter build appbundle --release --build-number=$(( ${{ github.run_number }} + 100 ))
+        # run_number + 300 keeps versionCode above the live manual build (300)
+        run: flutter build appbundle --release --build-number=$(( ${{ github.run_number }} + 300 ))
 
       - name: Upload to Play closed testing
         uses: r0adkll/upload-google-play@v1
