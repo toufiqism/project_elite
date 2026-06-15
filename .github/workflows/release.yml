@@ -36,13 +36,12 @@ jobs:
         # run_number + 100 keeps versionCode above the current live build (11)
         run: flutter build appbundle --release --build-number=$(( ${{ github.run_number }} + 100 ))
 
-      - name: Upload to Play internal
+      - name: Upload to Play closed testing
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.toufiq.elite.project_elite
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
-          track: internal
+          track: alpha          # default closed track; change to your custom closed-track name if set
           status: completed
           inAppUpdatePriority: 5
-          healthFeatures: '["health"]'
