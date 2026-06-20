@@ -4,17 +4,44 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/storage/hive_setup.dart';
 import '../../../core/utils/date_utils.dart';
+import '../models/study_draft.dart';
 import '../models/study_session.dart';
 
 class StudyController extends ChangeNotifier {
   static const _uuid = Uuid();
+  static const _draftKey = 'study_draft';
   final Box _box = Hive.box(HiveBoxes.study);
+  final Box _settings = Hive.box(HiveBoxes.settings);
 
   List<StudySession> _sessions = [];
   List<StudySession> get sessions => List.unmodifiable(_sessions);
 
+  StudyDraft? _draft;
+  StudyDraft? get draft => _draft;
+
   StudyController() {
     _load();
+    _loadDraft();
+  }
+
+  void _loadDraft() {
+    final raw = _settings.get(_draftKey);
+    if (raw is Map) {
+      _draft = StudyDraft.fromJson(Map<String, dynamic>.from(raw));
+    }
+  }
+
+  Future<void> saveDraft(StudyDraft draft) async {
+    _draft = draft;
+    await _settings.put(_draftKey, draft.toJson());
+    notifyListeners();
+  }
+
+  Future<void> clearDraft() async {
+    if (_draft == null && !_settings.containsKey(_draftKey)) return;
+    _draft = null;
+    await _settings.delete(_draftKey);
+    notifyListeners();
   }
 
   void _load() {

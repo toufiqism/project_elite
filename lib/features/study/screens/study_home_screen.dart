@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../shared/widgets/elite_card.dart';
 import '../../profile/state/profile_controller.dart';
+import '../models/study_draft.dart';
 import '../state/study_controller.dart';
 import 'study_history_screen.dart';
 import 'study_timer_screen.dart';
@@ -48,6 +49,10 @@ class StudyHomeScreen extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(
             20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
         children: [
+          if (study.draft != null) ...[
+            _resumeBanner(context, study.draft!),
+            const SizedBox(height: 16),
+          ],
           EliteCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,6 +211,76 @@ class StudyHomeScreen extends StatelessWidget {
           const SizedBox(height: 24),
           const SectionHeader(title: 'This week by subject'),
           _subjectBreakdown(context, study.subjectTotalsThisWeek()),
+        ],
+      ),
+    );
+  }
+
+  Widget _resumeBanner(BuildContext context, StudyDraft draft) {
+    return EliteCard(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              StudyTimerScreen(subject: draft.subject, draft: draft),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            draft.running ? Icons.timer : Icons.pause_circle_outline,
+            color: context.colors.accent,
+            size: 30,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  draft.running ? 'Session in progress' : 'Session paused',
+                  style: TextStyle(
+                    color: context.colors.text,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${draft.subject} · ${formatDuration(draft.elapsed)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: context.colors.muted, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Discard',
+            icon: Icon(Icons.close, color: context.colors.muted),
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Discard session?'),
+                  content: Text(
+                      'This will delete the in-progress ${draft.subject} session (${formatDuration(draft.elapsed)}) without saving.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Keep'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Discard'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true && context.mounted) {
+                await context.read<StudyController>().clearDraft();
+              }
+            },
+          ),
         ],
       ),
     );

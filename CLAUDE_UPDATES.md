@@ -717,3 +717,33 @@ Platform changes:
 
 - `android/app/src/main/AndroidManifest.xml` — added `INTERNET`, `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION` permissions; renamed app label to "Project Elite"
 - `ios/Runner/Info.plist` — added `NSLocationWhenInUseUsageDescription` and `NSLocationAlwaysAndWhenInUseUsageDescription`
+
+## 2026-06-18 — Fix study timer drifting when app backgrounded/phone locked
+
+**Problem:** The study timer counted seconds by incrementing a counter on each 1-second `Timer.periodic` tick. When the app was backgrounded or the phone locked, the OS suspends the timer, so ticks stopped firing and elapsed time fell behind real time.
+
+**Fix:** Reworked `study_timer_screen.dart` to derive elapsed time from wall-clock timestamps instead of counting ticks. Decision (confirmed with user): background/locked time **is** counted as study time.
+
+- `_elapsed` is now a computed getter: `_accumulated + (now - _segmentStart)` while running.
+- `_accumulated` holds time from finished (paused) segments; `_segmentStart` is the wall-clock start of the current running segment.
+- The 1s periodic timer now only triggers UI refreshes (`setState`), it no longer accumulates time.
+- Added `WidgetsBindingObserver` so the display snaps to the correct value immediately on `resumed`, instead of waiting for the next tick.
+- `_finish()` captures `_elapsed` before clearing running state so the in-progress segment isn't dropped.
+
+Files: `lib/features/study/screens/study_timer_screen.dart`
+
+## 2026-06-18 — Add study session draft persistence (survives app kill)
+
+**Goal:** An in-progress study session should survive the app being killed by the OS (low-memory eviction, force-stop, reboot), not just backgrounding while the process stays alive.
+
+**Implementation:**
+- New model `lib/features/study/models/study_draft.dart` — `StudyDraft` holds subject, first-start time, accumulated paused seconds, running-segment wall-clock start, running flag, and note. `elapsed` is reconstructed from wall-clock timestamps so dead time still counts (consistent with the live timer's "keep counting" behaviour).
+- `StudyController` now persists the draft in the existing `settings` Hive box under key `study_draft`. Added `draft` getter, `saveDraft()`, `clearDraft()`, and load-on-startup.
+- `StudyTimerScreen` takes an optional `draft` to restore from; persists the draft on start, pause, and on `AppLifecycleState.paused/inactive` (the state that always precedes an OS kill); clears it on finish (both saved and too-short branches).
+- `StudyHomeScreen` shows a "Resume session / Session paused" banner when a draft exists — tap to reopen the live timer, or discard via a confirm dialog.
+
+**Notes / limitations:**
+- One draft at a time; starting a new session overwrites any existing draft on first Start.
+- A manual back-out (not Finish) keeps the draft so the session isn't lost; the latest unsaved note text is only flushed on a lifecycle pause, not on plain pop.
+
+Files: `lib/features/study/models/study_draft.dart` (new), `lib/features/study/state/study_controller.dart`, `lib/features/study/screens/study_timer_screen.dart`, `lib/features/study/screens/study_home_screen.dart`
