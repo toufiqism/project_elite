@@ -44,6 +44,12 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Generated desktop/web platform folders — app targets Android/iOS only
+/linux/
+/macos/
+/windows/
+/web/
+
 # Local API keys — never commit. See api_keys.example.dart for the shape.
 lib/core/config/api_keys.dart
 

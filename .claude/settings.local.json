@@ -74,9 +74,7 @@
       "PowerShell(cd D:\\\\Projects\\\\project_elite; Get-Content D:\\\\Projects\\\\project_elite\\\\_analyze.txt | Where-Object { $_ -match '\\\\sinfo\\\\s-' })",
       "Bash(Select-String -Pattern \"error|warning|info|issues found|No issues\")",
       "Bash(Select-Object -First 60)",
-      "PowerShell([Convert]::ToBase64String\\([IO.File]::ReadAllBytes\\(\"android\\\\upload-keystore.jks\"\\)\\))",
-      "PowerShell(Set-Clipboard *)",
-      "PowerShell(git *)"
+      "Bash(xcrun simctl *)"
     ]
   }
 }
