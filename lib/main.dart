@@ -114,10 +114,10 @@ class ProjectEliteApp extends StatelessWidget {
             return ctrl;
           },
         ),
-        ChangeNotifierProxyProvider2<PrayerController, AyanokojiController,
-            NotificationController>(
+        ChangeNotifierProxyProvider4<PrayerController, AyanokojiController,
+            StepController, ProfileController, NotificationController>(
           create: (_) => NotificationController(),
-          update: (_, prayer, ayano, notif) {
+          update: (_, prayer, ayano, steps, profile, notif) {
             final ctrl = notif ?? NotificationController();
             // Cheaply guarded by scheduleVersion: only reschedules when the
             // prayer cache or discipline mode actually changed.
@@ -125,6 +125,11 @@ class ProjectEliteApp extends StatelessWidget {
               prayerTimesByDay: prayer.timesForUpcomingDays(days: 7),
               prayerVersion: prayer.scheduleVersion,
               disciplineMode: ayano.disciplineMode,
+            );
+            // Suppress walk reminders + celebrate once the step goal is hit.
+            ctrl.applyStepContext(
+              todaySteps: steps.todaySteps,
+              stepGoal: profile.profile?.stepGoalPerDay ?? 0,
             );
             return ctrl;
           },
@@ -186,21 +191,33 @@ class _Root extends StatefulWidget {
   State<_Root> createState() => _RootState();
 }
 
-class _RootState extends State<_Root> {
+class _RootState extends State<_Root> with WidgetsBindingObserver {
   bool _sessionReady = false;
   String? _handledUid;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     context.read<AuthController>().addListener(_onAuthChanged);
     _onAuthChanged();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     context.read<AuthController>().removeListener(_onAuthChanged);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Walk reminders are scheduled per-day over a short horizon, so re-arm them
+    // (and refresh all other schedules) each time the app returns to the
+    // foreground — this is what keeps the next day's reminders reliably set.
+    if (state == AppLifecycleState.resumed && mounted && _sessionReady) {
+      unawaited(context.read<NotificationController>().reschedule());
+    }
   }
 
   void _onAuthChanged() {
