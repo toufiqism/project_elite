@@ -124,12 +124,29 @@ class StepsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(
-            today >= goal
-                ? 'Goal reached. Strong.'
-                : '${goal - today} steps to your goal',
-            style: TextStyle(color: context.colors.muted, fontSize: 12),
-          ),
+          if (today >= goal)
+            Row(
+              children: [
+                Icon(Icons.emoji_events,
+                    color: context.colors.success, size: 16),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Goal smashed — $today steps today. No more nudges, just keep moving.',
+                    style: TextStyle(
+                      color: context.colors.success,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Text(
+              '${goal - today} steps to your goal',
+              style: TextStyle(color: context.colors.muted, fontSize: 12),
+            ),
         ],
       ),
     );

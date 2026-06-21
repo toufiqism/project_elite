@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
 import '../../../core/storage/hive_setup.dart';
+import '../../../core/utils/date_utils.dart';
 import '../../prayer/state/prayer_controller.dart';
 import '../models/notification_settings.dart';
 import '../service/notification_service.dart';
@@ -16,7 +17,10 @@ import '../service/notification_service.dart';
 /// 2000-2009: study daily
 /// 3000-3099: water (one per slot in the day)
 /// 4000-4009: streak end-of-day
-/// 5000-5099: walk (one per slot in the day)
+/// 5000-5099: walk — 5000 + dayOffset*20 + slot. Per-day concrete times across
+///            a short horizon (re-armed on resume), so a single day's reminders
+///            can be suppressed without killing future days.
+/// 5100: walk goal-reached celebration (one-time per day)
 /// 9000-9099: test
 class _NotifIds {
   static int prayerAt(int dayOffset, PrayerSlot s) =>
@@ -26,14 +30,29 @@ class _NotifIds {
   static const int studyDaily = 2000;
   static int waterSlot(int i) => 3000 + i;
   static const int streakEod = 4000;
-  static int walkSlot(int i) => 5000 + i;
+  static int walkSlot(int dayOffset, int i) => 5000 + dayOffset * 20 + i;
+  static const int walkGoal = 5100;
   static const int test = 9000;
 }
 
 class NotificationController extends ChangeNotifier {
   static const _key = 'settings_v1';
+  static const _walkGoalDayKey = 'walk_goal_day';
+  // Walk reminders are scheduled as concrete per-day times over this horizon and
+  // re-armed on every app resume/reschedule, rather than as one repeating-daily
+  // notification — so a day whose goal is met can be suppressed in isolation.
+  static const _walkHorizonDays = 5;
+  static const _walkMaxSlotsPerDay = 20; // matches the dayOffset*20 ID stride
   final Box _box = Hive.box(HiveBoxes.notifications);
   final NotificationService _svc = NotificationService.instance;
+
+  // Latest known step progress, fed from the provider tree via
+  // [applyStepContext]. Used to suppress walk reminders once the goal is met.
+  int _stepsToday = 0;
+  int _stepGoal = 0;
+  // Day-key (yyyy-MM-dd) we've already suppressed walk reminders + celebrated
+  // for, so we do each at most once per day. Persisted so it survives restarts.
+  String? _walkGoalDay;
 
   NotificationSettings _settings = NotificationSettings.defaults();
   NotificationSettings get settings => _settings;
@@ -78,6 +97,44 @@ class NotificationController extends ChangeNotifier {
         _settings = NotificationSettings.defaults();
       }
     }
+    _walkGoalDay = _box.get(_walkGoalDayKey) as String?;
+  }
+
+  /// Fed from the provider tree with the user's live step progress. When the
+  /// daily step goal is reached we stop nagging — the remaining walk reminders
+  /// for today are cancelled and a one-time celebration is fired instead.
+  /// Runs on every step event, so it stays cheap and idempotent per day.
+  Future<void> applyStepContext({
+    required int todaySteps,
+    required int stepGoal,
+  }) async {
+    _stepsToday = todaySteps;
+    _stepGoal = stepGoal;
+    if (!_settings.walkOn || stepGoal <= 0) return;
+    final today = DateX.todayKey();
+    if (todaySteps >= stepGoal && _walkGoalDay != today) {
+      _walkGoalDay = today;
+      await _box.put(_walkGoalDayKey, today);
+      await _onWalkGoalReached(todaySteps);
+    }
+  }
+
+  Future<void> _onWalkGoalReached(int steps) async {
+    if (!_initialized) await ensureInitialized();
+    // Cancel today's remaining walk reminders (dayOffset 0). Future days stay
+    // armed, so tomorrow's reminders are untouched.
+    for (var i = 0; i < _walkMaxSlotsPerDay; i++) {
+      await _svc.cancel(_NotifIds.walkSlot(0, i));
+    }
+    final tone = _effectiveTone;
+    final copy = _walkGoalCopy(tone, steps);
+    await _svc.showNow(
+      id: _NotifIds.walkGoal,
+      channel: NotificationChannels.walk,
+      title: copy.title,
+      body: copy.body,
+      tone: tone,
+    );
   }
 
   /// Plugin init only — does NOT request perms. requestExactAlarmsPermission
@@ -258,35 +315,34 @@ class NotificationController extends ChangeNotifier {
     final end = s.walkEndHour;
     if (end <= start) return;
     final step = Duration(seconds: s.walkEverySeconds);
-    final firstSlot = DateTime.now().copyWith(
-      hour: start,
-      minute: 0,
-      second: 0,
-      millisecond: 0,
-      microsecond: 0,
-    );
-    final endSlot = DateTime.now().copyWith(
-      hour: end,
-      minute: 0,
-      second: 0,
-      millisecond: 0,
-      microsecond: 0,
-    );
+    if (step.inSeconds <= 0) return;
 
-    var i = 0;
-    var when = firstSlot;
-    while (!when.isAfter(endSlot) && i < 100) {
-      await _svc.scheduleDaily(
-        id: _NotifIds.walkSlot(i),
-        channel: NotificationChannels.walk,
-        hour: when.hour,
-        minute: when.minute,
-        title: _copy(tone, _Pack.walk).title,
-        body: _copy(tone, _Pack.walk).body,
-        tone: tone,
-      );
-      i += 1;
-      when = when.add(step);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final goalMetToday = _stepGoal > 0 && _stepsToday >= _stepGoal;
+
+    for (var dayOffset = 0; dayOffset < _walkHorizonDays; dayOffset++) {
+      // Today only: skip if the goal is already met — no nagging once done.
+      // Future days are unknown, so they schedule normally.
+      if (dayOffset == 0 && goalMetToday) continue;
+      final day = today.add(Duration(days: dayOffset));
+      var when = DateTime(day.year, day.month, day.day, start);
+      final endSlot = DateTime(day.year, day.month, day.day, end);
+      var i = 0;
+      while (!when.isAfter(endSlot) && i < _walkMaxSlotsPerDay) {
+        // scheduleAt silently ignores past times, so already-elapsed slots
+        // today are dropped automatically.
+        await _svc.scheduleAt(
+          id: _NotifIds.walkSlot(dayOffset, i),
+          channel: NotificationChannels.walk,
+          when: when,
+          title: _copy(tone, _Pack.walk).title,
+          body: _copy(tone, _Pack.walk).body,
+          tone: tone,
+        );
+        i += 1;
+        when = when.add(step);
+      }
     }
   }
 
@@ -372,6 +428,23 @@ _Copy _copy(NotificationTone tone, _Pack p) {
         case _Pack.test:
           return const _Copy('Test fired.', 'Discipline mode is live.');
       }
+  }
+}
+
+_Copy _walkGoalCopy(NotificationTone tone, int steps) {
+  switch (tone) {
+    case NotificationTone.silent:
+      return _Copy('Step goal reached', '$steps steps today. Done.');
+    case NotificationTone.motivational:
+      return _Copy(
+        'Goal smashed 👊',
+        '$steps steps today — you hit your goal. No more reminders, just respect.',
+      );
+    case NotificationTone.discipline:
+      return _Copy(
+        'Goal met.',
+        '$steps steps. You did what you said you would. Now keep going.',
+      );
   }
 }
 

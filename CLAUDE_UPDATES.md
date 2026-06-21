@@ -747,3 +747,32 @@ Files: `lib/features/study/screens/study_timer_screen.dart`
 - A manual back-out (not Finish) keeps the draft so the session isn't lost; the latest unsaved note text is only flushed on a lifecycle pause, not on plain pop.
 
 Files: `lib/features/study/models/study_draft.dart` (new), `lib/features/study/state/study_controller.dart`, `lib/features/study/screens/study_timer_screen.dart`, `lib/features/study/screens/study_home_screen.dart`
+
+## 2026-06-20 — Stop walk reminders once step goal is reached + encouraging message
+
+**Goal:** When the user has already hit their daily step target, stop nagging with walk reminders, and instead show an encouraging message. Applies to BOTH push notifications and in-app (confirmed with user).
+
+**Implementation (no StepController change needed — NotificationController is created last in the provider tree, so it can consume step context directly):**
+- `main.dart`: upgraded the `NotificationController` provider from `ChangeNotifierProxyProvider2` to `ProxyProvider4`, adding `StepController` + `ProfileController` as dependencies. It now calls `applyStepContext(todaySteps, stepGoal)` alongside the existing `applyContext`.
+- `notification_controller.dart`:
+  - `applyStepContext()` — runs on every step event (cheap, idempotent per day). When today's steps reach the goal and we haven't handled today yet, it cancels the remaining walk reminders and fires a one-time celebration. The handled day-key is persisted (`walk_goal_day`) so it survives restarts and fires at most once/day.
+  - `_scheduleWalk()` now early-returns if today's goal is already met, so a later reschedule doesn't re-add today's reminders.
+  - New `_NotifIds.walkGoal = 5100` and `_walkGoalCopy(tone, steps)` with per-tone celebratory copy (silent/motivational/discipline).
+- `steps_screen.dart`: the Today card now shows a success-colored "Goal smashed — N steps today…" message with a trophy icon when the goal is met, instead of the "X steps to go" nudge.
+
+**Known tradeoff:** flutter_local_notifications can't skip a single occurrence of a repeating daily notification, so suppression works by cancelling, and the reminders are restored on the next reschedule (which runs when the app refreshes prayer/discipline context — typically next launch). If the app is never opened the following day, that day's walk reminders may not re-arm until it is.
+
+Files: `lib/main.dart`, `lib/features/notifications/state/notification_controller.dart`, `lib/features/steps/screens/steps_screen.dart`
+
+## 2026-06-20 — Walk reminders: per-day scheduling + app-resume re-arm
+
+**Why:** Repeating-daily walk notifications couldn't skip a single day, so suppression-on-goal relied on the app being reopened to restore them. Switched to concrete per-day scheduling with a resume hook for reliable daily re-arming.
+
+**Changes:**
+- `notification_controller.dart`:
+  - `_NotifIds.walkSlot` is now `(dayOffset, i) => 5000 + dayOffset*20 + i`, partitioning walk IDs by day so a single day can be cancelled in isolation. Celebration stays at 5100.
+  - `_scheduleWalk` now schedules concrete `scheduleAt` times across a `_walkHorizonDays = 5` horizon (max `_walkMaxSlotsPerDay = 20`/day) instead of one repeating `scheduleDaily`. Today (dayOffset 0) is skipped entirely when the goal is already met; past slots are dropped automatically by `scheduleAt`.
+  - `_onWalkGoalReached` cancels only today's slots (dayOffset 0), leaving future days armed.
+- `main.dart`: `_RootState` is now a `WidgetsBindingObserver`; on `AppLifecycleState.resumed` (once the session is ready) it calls `NotificationController.reschedule()`, re-arming the per-day walk window (and refreshing all schedules) every time the app returns to the foreground. `cancelAll()` inside reschedule also migrates away the old repeating walk notifications.
+
+Files: `lib/main.dart`, `lib/features/notifications/state/notification_controller.dart`
