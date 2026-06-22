@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../shared/widgets/atoms.dart';
 import '../../../shared/widgets/elite_card.dart';
@@ -308,6 +309,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
+          _themeToggle(context),
+          const SizedBox(width: 4),
           GestureDetector(
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ProfileScreen()),
@@ -322,6 +325,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Quick light↔dark flip. Reads the *resolved* brightness so it behaves
+  /// correctly even when the mode is `System`; the glyph shows the target mode
+  /// (sun when dark, moon when light). System remains selectable in Settings.
+  Widget _themeToggle(BuildContext context) {
+    final c = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return IconButton(
+      tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
+      icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode, color: c.muted),
+      onPressed: () => context
+          .read<ThemeController>()
+          .setMode(isDark ? ThemeMode.light : ThemeMode.dark),
     );
   }
 
