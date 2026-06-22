@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../shared/widgets/atoms.dart';
 import '../../../shared/widgets/elite_card.dart';
 import '../../profile/state/profile_controller.dart';
 import '../models/workout_plan.dart';
@@ -182,7 +183,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                           child: Image.network(
                             pe.exercise.gifUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
+                            errorBuilder: (_, _, _) => Container(
                               color: context.colors.surfaceAlt,
                               alignment: Alignment.center,
                               child: Icon(Icons.fitness_center,
@@ -253,11 +254,10 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
             style: TextStyle(color: context.colors.muted, fontSize: 14)),
         const SizedBox(height: 6),
         Text(target,
-            style: TextStyle(
-              color: context.colors.text,
-              fontSize: 48,
-              fontWeight: FontWeight.w800,
-            )),
+            style: monoStyle(
+                fontSize: 48,
+                color: context.colors.text,
+                fontWeight: FontWeight.w500)),
         const SizedBox(height: 32),
         SizedBox(
           width: double.infinity,
@@ -320,11 +320,10 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                 ),
               ),
               Text('${_restRemaining}s',
-                  style: TextStyle(
-                    color: context.colors.text,
-                    fontSize: 40,
-                    fontWeight: FontWeight.w800,
-                  )),
+                  style: monoStyle(
+                      fontSize: 40,
+                      color: context.colors.text,
+                      fontWeight: FontWeight.w500)),
             ],
           ),
         ),

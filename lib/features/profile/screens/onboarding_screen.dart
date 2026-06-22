@@ -160,30 +160,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Row(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Project Elite',
+                  Row(
+                    children: [
+                      for (var i = 0; i < _totalPages; i++)
+                        Expanded(
+                          child: Container(
+                            margin: EdgeInsets.only(
+                                right: i < _totalPages - 1 ? 6 : 0),
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: i <= _page
+                                  ? context.colors.text
+                                  : context.colors.line,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text('STEP ${_page + 1} OF $_totalPages',
                       style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: context.colors.accent,
-                        letterSpacing: 0.5,
+                        fontSize: 12,
+                        color: context.colors.muted,
+                        letterSpacing: 0.72,
+                        fontWeight: FontWeight.w600,
                       )),
-                  const Spacer(),
-                  Text('${_page + 1} / $_totalPages',
-                      style: TextStyle(color: context.colors.muted)),
                 ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: LinearProgressIndicator(
-                value: (_page + 1) / _totalPages,
-                backgroundColor: context.colors.surfaceAlt,
-                color: context.colors.primary,
-                minHeight: 4,
               ),
             ),
             Expanded(
@@ -239,7 +246,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(title,
               style: TextStyle(
                 fontSize: 26,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.5,
                 color: context.colors.text,
               )),
           const SizedBox(height: 8),

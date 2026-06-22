@@ -20,8 +20,8 @@ class EliteCard extends StatelessWidget {
     final card = Container(
       decoration: BoxDecoration(
         color: color ?? context.colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.colors.surfaceAlt, width: 1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: context.colors.line, width: 1),
       ),
       padding: padding,
       child: child,
@@ -29,7 +29,7 @@ class EliteCard extends StatelessWidget {
 
     if (onTap == null) return card;
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       onTap: onTap,
       child: card,
     );

@@ -16,9 +16,9 @@ ThemeData _build(Palette p, Brightness brightness) {
   final base = isDark
       ? ThemeData.dark(useMaterial3: true)
       : ThemeData.light(useMaterial3: true);
-  // Text/icon color that sits on top of a primary-filled button. Dark theme:
-  // dark navy on pale-blue. Light theme: white on deep blue.
-  final onPrimary = isDark ? p.background : Colors.white;
+  // Text/icon color on top of a primary-filled button. The design's indigo
+  // accent always pairs with white (accentOn = #fff) in both themes.
+  const onPrimary = Colors.white;
 
   final scheme = (isDark ? const ColorScheme.dark() : const ColorScheme.light())
       .copyWith(
@@ -93,7 +93,7 @@ ThemeData _build(Palette p, Brightness brightness) {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: p.text,
-        side: BorderSide(color: p.surfaceAlt),
+        side: BorderSide(color: p.line),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -103,10 +103,10 @@ ThemeData _build(Palette p, Brightness brightness) {
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       backgroundColor: p.surface,
       selectedItemColor: p.primary,
-      unselectedItemColor: p.muted,
+      unselectedItemColor: p.mutedSoft,
       type: BottomNavigationBarType.fixed,
       showUnselectedLabels: true,
     ),
-    dividerColor: p.surfaceAlt,
+    dividerColor: p.line,
   );
 }

@@ -23,7 +23,7 @@ class StudyHistoryScreen extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(
                   20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
               itemCount: sessions.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (_, i) {
                 final s = sessions[i];
                 return EliteCard(

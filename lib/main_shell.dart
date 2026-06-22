@@ -1,6 +1,9 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'core/theme/app_theme.dart';
 import 'features/dashboard/screens/dashboard_screen.dart';
 import 'features/fitness/screens/fitness_home_screen.dart';
 import 'features/habits/screens/habits_screen.dart';
@@ -25,6 +28,14 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     const HabitsScreen(),
     const PrayerScreen(),
     const FitnessHomeScreen(),
+  ];
+
+  static const _tabs = [
+    (Icons.grid_view_outlined, Icons.grid_view, 'Home'),
+    (Icons.menu_book_outlined, Icons.menu_book, 'Study'),
+    (Icons.check_circle_outline, Icons.check_circle, 'Habits'),
+    (Icons.mosque_outlined, Icons.mosque, 'Prayer'),
+    (Icons.fitness_center_outlined, Icons.fitness_center, 'Fitness'),
   ];
 
   @override
@@ -58,32 +69,97 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(index: _index, children: _pages),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _index,
+      bottomNavigationBar: _GlassTabBar(
+        index: _index,
         onTap: (i) => setState(() => _index = i),
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard),
-              label: 'Home'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.menu_book_outlined),
-              activeIcon: Icon(Icons.menu_book),
-              label: 'Study'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.check_circle_outline),
-              activeIcon: Icon(Icons.check_circle),
-              label: 'Habits'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.mosque_outlined),
-              activeIcon: Icon(Icons.mosque),
-              label: 'Prayer'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.fitness_center_outlined),
-              activeIcon: Icon(Icons.fitness_center),
-              label: 'Fitness'),
-        ],
+        tabs: _tabs,
+      ),
+    );
+  }
+}
+
+/// Frosted bottom tab bar matching the design's `TabBar` atom: translucent
+/// surface, top hairline, blur+saturation backdrop, accent active state.
+class _GlassTabBar extends StatelessWidget {
+  final int index;
+  final ValueChanged<int> onTap;
+  final List<(IconData, IconData, String)> tabs;
+
+  const _GlassTabBar({
+    required this.index,
+    required this.onTap,
+    required this.tabs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          decoration: BoxDecoration(
+            color: c.surface.withValues(alpha: 0.85),
+            border: Border(top: BorderSide(color: c.line, width: 1)),
+          ),
+          padding: EdgeInsets.fromLTRB(12, 8, 12, 8 + bottomInset),
+          child: Row(
+            children: [
+              for (var i = 0; i < tabs.length; i++)
+                Expanded(
+                  child: _TabItem(
+                    icon: index == i ? tabs[i].$2 : tabs[i].$1,
+                    label: tabs[i].$3,
+                    selected: index == i,
+                    onTap: () => onTap(i),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TabItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TabItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final color = selected ? c.accent : c.mutedSoft;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 22, color: color),
+            const SizedBox(height: 3),
+            Text(label,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  color: color,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                )),
+          ],
+        ),
       ),
     );
   }

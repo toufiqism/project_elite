@@ -1,9 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../shared/widgets/atoms.dart';
 import '../../../shared/widgets/elite_card.dart';
 import '../../profile/state/profile_controller.dart';
 import '../../settings/screens/settings_screen.dart';
@@ -39,156 +39,476 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     final fc = context.watch<FitnessController>();
     final profile = context.watch<ProfileController>().profile;
+
+    final weight = fc.latestWeight ?? profile?.weightKg;
+    final height = profile?.heightCm ?? 0;
+    final bmi = (weight != null && height > 0)
+        ? weight / ((height / 100) * (height / 100))
+        : null;
+    String? weightTrend;
+    if (fc.weights.length >= 2) {
+      final diff = fc.weights.last.weightKg -
+          fc.weights[fc.weights.length - 2].weightKg;
+      weightTrend = '${diff >= 0 ? '+' : ''}${diff.toStringAsFixed(1)}';
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Fitness'),
-        actions: [
-          IconButton(
-            tooltip: 'Steps',
-            icon: const Icon(Icons.directions_walk),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const StepsScreen()),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Weight',
-            icon: const Icon(Icons.monitor_weight_outlined),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const WeightScreen()),
-            ),
-          ),
-          IconButton(
-            tooltip: 'History',
-            icon: const Icon(Icons.history),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const WorkoutHistoryScreen()),
-            ),
-          ),
-        ],
-      ),
       body: RefreshIndicator(
         onRefresh: () async {
           if (profile != null) await fc.buildTodayPlan(profile);
         },
         child: ListView(
-          padding: EdgeInsets.fromLTRB(
-              20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
+          padding: EdgeInsets.only(
+              bottom: 32 + MediaQuery.of(context).padding.bottom),
           children: [
-            _summaryCard(fc, profile?.bmi),
-            const SizedBox(height: 20),
-            if (!fc.hasApiKey)
-              _apiKeyPrompt(context)
-            else if (fc.loading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 40),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (fc.planError != null)
-              _errorCard(fc.planError!, () {
-                if (profile != null) fc.buildTodayPlan(profile);
-              })
-            else if (fc.todayPlan == null || fc.todayPlan!.exercises.isEmpty)
-              _emptyPlanCard(context, fc, profile?.preferredWorkoutType)
-            else
-              _planCard(context, fc.todayPlan!),
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 56, 20, 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${fc.sessions.length} workouts · ${profile?.preferredWorkoutType ?? 'Training'}',
+                          style: TextStyle(fontSize: 12, color: c.muted),
+                        ),
+                        const SizedBox(height: 2),
+                        Text('Fitness',
+                            style: TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.6,
+                              color: c.text,
+                            )),
+                      ],
+                    ),
+                  ),
+                  EliteIconButton(
+                    icon: Icons.directions_walk,
+                    onPressed: () => Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const StepsScreen())),
+                  ),
+                  const SizedBox(width: 8),
+                  EliteIconButton(
+                    icon: Icons.monitor_weight_outlined,
+                    onPressed: () => Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const WeightScreen())),
+                  ),
+                  const SizedBox(width: 8),
+                  EliteIconButton(
+                    icon: Icons.history,
+                    onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const WorkoutHistoryScreen())),
+                  ),
+                ],
+              ),
+            ),
+
+            // Body stats
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _bigStat(
+                      context,
+                      'Weight',
+                      weight != null ? weight.toStringAsFixed(1) : '—',
+                      'kg',
+                      weightTrend,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _bigStat(context, 'BMI',
+                        bmi != null ? bmi.toStringAsFixed(1) : '—', '', null),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _bigStat(context, 'Workouts', '${fc.sessions.length}',
+                        '', fc.didWorkoutToday() ? '+1' : null),
+                  ),
+                ],
+              ),
+            ),
+
+            // Today
+            EliteSection(
+              title: 'Today',
+              child: !fc.hasApiKey
+                  ? _apiKeyPrompt(context)
+                  : fc.loading
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      : fc.planError != null
+                          ? _errorCard(fc.planError!, () {
+                              if (profile != null) fc.buildTodayPlan(profile);
+                            })
+                          : (fc.todayPlan == null ||
+                                  fc.todayPlan!.exercises.isEmpty)
+                              ? _emptyPlanCard(
+                                  context, fc, profile?.preferredWorkoutType)
+                              : _todayHero(context, fc.todayPlan!),
+            ),
+
+            // This week
+            EliteSection(
+              title: 'This week',
+              child: _thisWeek(context, fc),
+            ),
+
+            // Browse
+            EliteSection(
+              title: 'Browse',
+              child: Column(
+                children: [
+                  _browseRow(context, 'Cardio · HIIT', '20 min · 4 levels'),
+                  const SizedBox(height: 8),
+                  _browseRow(
+                      context, 'Home — bodyweight', '30 min · No equipment'),
+                  const SizedBox(height: 8),
+                  _browseRow(context, 'Stretching', '15 min · Recovery'),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _summaryCard(FitnessController fc, double? bmi) {
-    return EliteCard(
-      child: Row(
+  Widget _bigStat(BuildContext context, String label, String value, String unit,
+      String? trend) {
+    final c = context.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: c.line, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Today',
-                    style: TextStyle(
-                        color: context.colors.muted, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 6),
-                Text(
-                  fc.didWorkoutToday() ? 'Workout done' : 'Plan ready',
-                  style: TextStyle(
-                    color: context.colors.text,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
+          Text(label.toUpperCase(),
+              style: TextStyle(
+                fontSize: 10,
+                color: c.muted,
+                letterSpacing: 0.6,
+                fontWeight: FontWeight.w600,
+              )),
+          const SizedBox(height: 6),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Flexible(
+                child: Text(value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: monoStyle(fontSize: 22, color: c.text)),
+              ),
+              if (unit.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(left: 2),
+                  child: Text(unit,
+                      style: TextStyle(fontSize: 11, color: c.muted)),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.local_fire_department,
-                        color: context.colors.warning, size: 16),
-                    const SizedBox(width: 4),
-                    Text('${fc.currentWorkoutStreak()}d streak',
-                        style: TextStyle(
-                            color: context.colors.muted, fontSize: 12)),
-                    const SizedBox(width: 12),
-                    Text('${fc.sessions.length} total',
-                        style: TextStyle(
-                            color: context.colors.muted, fontSize: 12)),
-                  ],
-                ),
-              ],
-            ),
+            ],
           ),
-          if (bmi != null && bmi > 0)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(bmi.toStringAsFixed(1),
-                    style: TextStyle(
-                      color: context.colors.accent,
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                    )),
-                Text('BMI',
-                    style: TextStyle(color: context.colors.muted, fontSize: 12)),
-              ],
+          if (trend != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(trend,
+                  style: monoStyle(
+                    fontSize: 11,
+                    color: trend.startsWith('-') ? c.success : c.accent,
+                    fontWeight: FontWeight.w500,
+                  )),
             ),
         ],
       ),
     );
   }
 
+  Widget _todayHero(BuildContext context, WorkoutPlan plan) {
+    final c = context.colors;
+    final est = plan.estimatedDuration();
+    final kcal = plan.estimatedKcal();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final heroBg = isDark ? c.surfaceAlt : const Color(0xFF0A0A0A);
+    const heroText = Color(0xFFFAFAFA);
+    return EliteCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ClipRRect(
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(14)),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(width: 4, color: c.accent),
+                  Expanded(
+                    child: Container(
+                      color: heroBg,
+                      padding: const EdgeInsets.fromLTRB(16, 20, 18, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 9, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.06),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.12)),
+                            ),
+                            child: Text(plan.label.toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: heroText,
+                                  fontWeight: FontWeight.w500,
+                                )),
+                          ),
+                          const SizedBox(height: 12),
+                          Text('Today\'s session',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -0.2,
+                                color: heroText,
+                              )),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              _heroStat('${plan.exercises.length}', 'exercises'),
+                              const SizedBox(width: 16),
+                              _heroStat('${est.inMinutes}', 'min'),
+                              const SizedBox(width: 16),
+                              _heroStat('${kcal.round()}', 'cal'),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: c.surface,
+              border: Border(top: BorderSide(color: c.line, width: 1)),
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(14)),
+            ),
+            child: Row(
+              children: [
+                EliteButton(
+                  label: 'Preview',
+                  variant: EliteButtonVariant.secondary,
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => WorkoutSessionScreen(plan: plan)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: EliteButton(
+                    label: 'Start workout',
+                    full: true,
+                    leadingIcon: Icons.play_arrow_rounded,
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => WorkoutSessionScreen(plan: plan)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _heroStat(String value, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(value,
+            style: monoStyle(
+                fontSize: 13,
+                color: const Color(0xFFFAFAFA),
+                fontWeight: FontWeight.w500)),
+        const SizedBox(width: 4),
+        Text(label,
+            style: const TextStyle(fontSize: 12, color: Color(0xFFA1A1AA))),
+      ],
+    );
+  }
+
+  Widget _thisWeek(BuildContext context, FitnessController fc) {
+    final c = context.colors;
+    final now = DateTime.now();
+    final weekStart = DateX.startOfWeek(now);
+    final doneKeys = fc.sessions.map((s) => DateX.dayKey(s.startedAt)).toSet();
+    var doneCount = 0;
+    for (var i = 0; i < 7; i++) {
+      final d = weekStart.add(Duration(days: i));
+      if (!d.isAfter(now) && doneKeys.contains(DateX.dayKey(d))) doneCount++;
+    }
+    const letters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    return EliteCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('$doneCount of 7 days',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: c.text)),
+              Text('${(doneCount / 7 * 100).round()}%',
+                  style: monoStyle(fontSize: 13, color: c.muted)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              for (var i = 0; i < 7; i++) ...[
+                if (i > 0) const SizedBox(width: 6),
+                Expanded(
+                  child: _weekCell(
+                    context,
+                    letters[i],
+                    weekStart.add(Duration(days: i)),
+                    now,
+                    doneKeys,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _weekCell(BuildContext context, String letter, DateTime day,
+      DateTime now, Set<String> doneKeys) {
+    final c = context.colors;
+    final isToday = DateX.dayKey(day) == DateX.dayKey(now);
+    final done = doneKeys.contains(DateX.dayKey(day)) && !day.isAfter(now);
+    return Column(
+      children: [
+        Text(letter, style: TextStyle(fontSize: 10, color: c.muted)),
+        const SizedBox(height: 6),
+        AspectRatio(
+          aspectRatio: 1,
+          child: Container(
+            decoration: BoxDecoration(
+              color: done
+                  ? c.accent
+                  : isToday
+                      ? c.accentSoft
+                      : c.surfaceAlt,
+              borderRadius: BorderRadius.circular(8),
+              border: isToday && !done
+                  ? Border.all(color: c.accent, width: 1)
+                  : null,
+            ),
+            child: done
+                ? const Icon(Icons.check, size: 14, color: Colors.white)
+                : null,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _browseRow(BuildContext context, String title, String sub) {
+    final c = context.colors;
+    return EliteCard(
+      padding: const EdgeInsets.all(12),
+      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Workout library coming soon.')),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+                color: c.surfaceAlt, borderRadius: BorderRadius.circular(9)),
+            child: Icon(Icons.fitness_center, size: 18, color: c.muted),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w500,
+                        color: c.text)),
+                Text(sub, style: TextStyle(fontSize: 11.5, color: c.muted)),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, size: 15, color: c.muted),
+        ],
+      ),
+    );
+  }
+
   Widget _apiKeyPrompt(BuildContext context) {
+    final c = context.colors;
     return EliteCard(
       child: Column(
         children: [
-          Icon(Icons.vpn_key, color: context.colors.accent, size: 36),
+          Icon(Icons.vpn_key, color: c.accent, size: 36),
           const SizedBox(height: 10),
-          Text(
-            'Set up your ExerciseDB API key',
-            style: TextStyle(
-              color: context.colors.text,
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-            ),
-            textAlign: TextAlign.center,
-          ),
+          Text('Set up your ExerciseDB API key',
+              style: TextStyle(
+                  color: c.text, fontSize: 17, fontWeight: FontWeight.w700),
+              textAlign: TextAlign.center),
           const SizedBox(height: 6),
           Text(
             'Fitness uses the ExerciseDB API on RapidAPI to fetch the exercise catalog. '
             'Free tier ~50 requests/day. Paste your key in Settings to start.',
-            style: TextStyle(color: context.colors.muted),
+            style: TextStyle(color: c.muted),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 14),
           FilledButton.icon(
             icon: const Icon(Icons.settings),
             label: const Text('Open settings'),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
-            ),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen())),
           ),
         ],
       ),
@@ -196,14 +516,13 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
   }
 
   Widget _errorCard(String msg, VoidCallback retry) {
+    final c = context.colors;
     return EliteCard(
       child: Column(
         children: [
-          Icon(Icons.error_outline, color: context.colors.danger, size: 32),
+          Icon(Icons.error_outline, color: c.danger, size: 32),
           const SizedBox(height: 8),
-          Text(msg,
-              style: TextStyle(color: context.colors.muted),
-              textAlign: TextAlign.center),
+          Text(msg, style: TextStyle(color: c.muted), textAlign: TextAlign.center),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: retry,
@@ -215,145 +534,23 @@ class _FitnessHomeScreenState extends State<FitnessHomeScreen> {
     );
   }
 
-  Widget _emptyPlanCard(BuildContext context, FitnessController fc, String? type) {
+  Widget _emptyPlanCard(
+      BuildContext context, FitnessController fc, String? type) {
+    final c = context.colors;
     return EliteCard(
       child: Column(
         children: [
-          Icon(Icons.inbox, color: context.colors.muted, size: 32),
+          Icon(Icons.inbox, color: c.muted, size: 32),
           const SizedBox(height: 10),
           Text(
             type == 'Walking'
                 ? 'No cardio exercises cached yet.\nPull down to refresh.'
                 : 'No exercises matched today\'s plan.\nPull down to refresh.',
-            style: TextStyle(color: context.colors.muted),
+            style: TextStyle(color: c.muted),
             textAlign: TextAlign.center,
           ),
         ],
       ),
     );
-  }
-
-  Widget _planCard(BuildContext context, WorkoutPlan plan) {
-    final est = plan.estimatedDuration();
-    final kcal = plan.estimatedKcal();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        EliteCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(plan.label,
-                        style: TextStyle(
-                          color: context.colors.text,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                        )),
-                  ),
-                  Text('${plan.exercises.length} ex · ${formatDuration(est)} · ~${kcal.round()} kcal',
-                      style: TextStyle(
-                          color: context.colors.muted, fontSize: 12)),
-                ],
-              ),
-              const SizedBox(height: 14),
-              FilledButton.icon(
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('Start workout'),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => WorkoutSessionScreen(plan: plan),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        const SectionHeader(title: 'Today\'s exercises'),
-        ...plan.exercises.map((pe) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: EliteCard(
-              child: Row(
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: context.colors.surfaceAlt,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: pe.exercise.gifUrl.isNotEmpty
-                        ? Image.network(
-                            pe.exercise.gifUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Icon(
-                              Icons.fitness_center,
-                              color: context.colors.muted,
-                            ),
-                          )
-                        : Icon(Icons.fitness_center,
-                            color: context.colors.muted),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _toTitle(pe.exercise.name),
-                          style: TextStyle(
-                            color: context.colors.text,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          '${pe.exercise.target} · ${pe.exercise.equipment}',
-                          style: TextStyle(
-                              color: context.colors.muted, fontSize: 12),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          pe.holdSeconds != null
-                              ? '${pe.sets} × ${pe.holdSeconds}s'
-                              : '${pe.sets} × ${pe.reps} reps',
-                          style: TextStyle(
-                            color: context.colors.accent,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Search on YouTube',
-                    icon: Icon(Icons.play_circle_outline,
-                        color: context.colors.muted),
-                    onPressed: () => launchUrl(
-                      Uri.parse(
-                          'https://www.youtube.com/results?search_query=${Uri.encodeComponent("How to do ${pe.exercise.name}")}'),
-                      mode: LaunchMode.externalApplication,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
-      ],
-    );
-  }
-
-  String _toTitle(String s) {
-    if (s.isEmpty) return s;
-    return s.split(' ').map((w) {
-      if (w.isEmpty) return w;
-      return w[0].toUpperCase() + w.substring(1);
-    }).join(' ');
   }
 }

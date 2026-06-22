@@ -2,7 +2,7 @@ name: project_elite
 description: "Project Elite — a self-improvement app for discipline, study, fitness, prayer, and habit mastery."
 publish_to: 'none'
 
-version: 1.1.1+12  # semver+versionCode. Bump +N every Play upload; bump x.y.z on user-facing releases.
+version: 1.2.0+13  # semver+versionCode. Bump +N every Play upload; bump x.y.z on user-facing releases.
 
 environment:
   sdk: ^3.11.5
