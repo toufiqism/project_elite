@@ -74,7 +74,8 @@
       "PowerShell(cd D:\\\\Projects\\\\project_elite; Get-Content D:\\\\Projects\\\\project_elite\\\\_analyze.txt | Where-Object { $_ -match '\\\\sinfo\\\\s-' })",
       "Bash(Select-String -Pattern \"error|warning|info|issues found|No issues\")",
       "Bash(Select-Object -First 60)",
-      "Bash(xcrun simctl *)"
+      "Bash(xcrun simctl *)",
+      "PowerShell(git add -A)"
     ]
   }
 }

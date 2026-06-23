@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -170,15 +171,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           'Study'),
                       _microStat(context, Icons.fitness_center, '${workoutMin}m',
                           'Train'),
-                      _microStat(
-                          context,
-                          Icons.directions_walk,
-                          stepsAvailable ? _compact(todaySteps) : '—',
-                          'Steps'),
                       _microStat(context, Icons.mosque_outlined,
                           '${prayer.completedToday()}/5', 'Prayer'),
                     ],
                   ),
+                  const SizedBox(height: 18),
+                  _weekSteps(
+                      context, steps.last7DaySteps, stepGoal, stepsAvailable),
                 ],
               ),
             ),
@@ -340,6 +339,118 @@ class _DashboardScreenState extends State<DashboardScreen> {
       onPressed: () => context
           .read<ThemeController>()
           .setMode(isDark ? ThemeMode.light : ThemeMode.dark),
+    );
+  }
+
+  /// Compact per-day step breakdown for the last 7 days, shown in the hero
+  /// card. Mirrors the bar chart on StepsScreen but slimmer. Tapping opens the
+  /// full Steps screen. The daily-score pillar still uses today's count.
+  Widget _weekSteps(
+      BuildContext context, List<int> week, int goal, bool available) {
+    final c = context.colors;
+    final days = DateX.last7Days();
+    final header = Row(
+      children: [
+        Icon(Icons.directions_walk, size: 13, color: c.muted),
+        const SizedBox(width: 5),
+        Text('STEPS · THIS WEEK',
+            style: TextStyle(
+              fontSize: 10,
+              color: c.muted,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.4,
+            )),
+      ],
+    );
+
+    if (!available) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          header,
+          const SizedBox(height: 8),
+          Text('Step counting is off — tap to enable',
+              style: TextStyle(fontSize: 12, color: c.mutedSoft)),
+        ],
+      );
+    }
+
+    final maxVal = week.fold<int>(goal, (a, b) => b > a ? b : a).toDouble();
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const StepsScreen()),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          header,
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 72,
+            child: BarChart(
+              BarChartData(
+                maxY: maxVal * 1.15,
+                alignment: BarChartAlignment.spaceAround,
+                gridData: const FlGridData(show: false),
+                borderData: FlBorderData(show: false),
+                barTouchData: BarTouchData(
+                  enabled: true,
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipColor: (_) => c.surfaceAlt,
+                    getTooltipItem: (group, _, _, _) => BarTooltipItem(
+                      _compact(week[group.x.toInt()]),
+                      TextStyle(
+                          color: c.text,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 18,
+                      getTitlesWidget: (value, meta) {
+                        final i = value.toInt();
+                        if (i < 0 || i >= days.length) {
+                          return const SizedBox.shrink();
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(DateX.shortDay(days[i]),
+                              style: TextStyle(color: c.muted, fontSize: 10)),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                barGroups: [
+                  for (int i = 0; i < week.length; i++)
+                    BarChartGroupData(
+                      x: i,
+                      barRods: [
+                        BarChartRodData(
+                          toY: week[i].toDouble(),
+                          width: 10,
+                          borderRadius: BorderRadius.circular(3),
+                          color: week[i] >= goal ? c.success : c.primary,
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
