@@ -36,6 +36,12 @@ jobs:
         # run_number + 300 keeps versionCode above the live manual build (300)
         run: flutter build appbundle --release --build-number=$(( ${{ github.run_number }} + 300 ))
 
+      - name: Generate release notes
+        # Play "What's new" = latest commit subject. Capped at 500 chars per locale.
+        run: |
+          mkdir -p distribution/whatsnew
+          git log -1 --pretty=%s | head -c 500 > distribution/whatsnew/whatsnew-en-US
+
       - name: Upload to Play closed testing
         uses: r0adkll/upload-google-play@v1
         with:
@@ -45,3 +51,4 @@ jobs:
           track: alpha          # default closed track; change to your custom closed-track name if set
           status: completed
           inAppUpdatePriority: 5
+          whatsNewDirectory: distribution/whatsnew
